@@ -10,6 +10,7 @@ import SaldoCorridaPage from './pages/SaldoCorridaPage'
 import CarteiraPage from './pages/CarteiraPage'
 import ExtratoPage from './pages/ExtratoPage'
 import PlanosPage from './pages/PlanosPage'
+import PagamentoRetornoPage from './pages/PagamentoRetornoPage'
 
 function App() {
   return (
@@ -71,6 +72,14 @@ function App() {
               element={
                 <ProtectedRoute role="Cliente">
                   <PlanosPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/planos/retorno"
+              element={
+                <ProtectedRoute role="Cliente">
+                  <PagamentoRetornoPage />
                 </ProtectedRoute>
               }
             />

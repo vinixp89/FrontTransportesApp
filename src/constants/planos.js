@@ -30,3 +30,23 @@ const ESTILO_PLANO = {
 export function obterEstiloPlano(tipo) {
   return ESTILO_PLANO[tipo] ?? ESTILO_PLANO[0]
 }
+
+// Espelha StatusAssinatura do backend (TransportesApp.Domain/Enums/Enums.cs) — os enums do backend
+// vêm sempre como número (sem JsonStringEnumConverter em lugar nenhum da API), então essas chaves
+// são a fonte de verdade de "o que cada número significa" no front.
+export const STATUS_ASSINATURA = {
+  PENDENTE_PAGAMENTO: 0,
+  ATIVA: 1,
+  PAGAMENTO_RECUSADO: 2,
+  CANCELADA: 3,
+}
+
+// Espelha StatusPagamento do backend — usado só pela tela de retorno do pagamento (PagamentoRetornoPage).
+export const STATUS_PAGAMENTO = {
+  PENDENTE: 0,
+  EM_PROCESSAMENTO: 1,
+  APROVADO: 2,
+  RECUSADO: 3,
+  CANCELADO: 4,
+  ESTORNADO: 5,
+}

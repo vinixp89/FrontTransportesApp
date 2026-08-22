@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import api, { extrairMensagemErro } from '../api/client'
 import { formatarPreco, obterFaixa } from '../constants/faixas'
-import { obterEstiloPlano } from '../constants/planos'
+import { obterEstiloPlano, STATUS_ASSINATURA } from '../constants/planos'
 import ThemeToggleButton from '../components/ThemeToggleButton'
 import AppNavbar from '../components/AppNavbar'
 
@@ -35,9 +35,19 @@ export default function PlanosPage() {
 
     try {
       const { data } = await api.post('/Planos/assinar', { tipo })
-      setAssinaturaAtual(data)
+
+      // Plano pago (ou trocando pra um diferente do atual): o backend já criou a assinatura como
+      // pendente e devolveu a URL de checkout do Mercado Pago — a confirmação de verdade acontece
+      // depois, na volta (ver PagamentoRetornoPage), não aqui.
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl
+        return
+      }
+
+      // Sem checkoutUrl: plano Básico (grátis, já ativa na hora) ou o cliente já estava assinando
+      // exatamente esse plano — nada pra pagar.
+      setAssinaturaAtual(data.assinatura)
       setMensagemSucesso(`Assinatura do plano ${nome} confirmada!`)
-      // Trocar de plano muda (ou zera) o benefício de corrida grátis — busca o status atualizado.
       const { data: novoBeneficio } = await api.get('/Planos/beneficio')
       setBeneficio(novoBeneficio)
     } catch (error) {
@@ -90,12 +100,16 @@ export default function PlanosPage() {
           {catalogo.map((plano) => {
             const estilo = obterEstiloPlano(plano.tipo)
             const ehPlanoAtual = assinaturaAtual?.tipo === plano.tipo
+            // "Seu plano atual" só quando o pagamento já foi confirmado — enquanto está pendente, a
+            // gente ainda não sabe se vai virar ativo de verdade, então mostra um estado diferente.
+            const ativo = ehPlanoAtual && assinaturaAtual.status === STATUS_ASSINATURA.ATIVA
+            const pendente = ehPlanoAtual && assinaturaAtual.status === STATUS_ASSINATURA.PENDENTE_PAGAMENTO
             const processandoEsse = processando === `assinar-${plano.tipo}`
 
-            // Status do benefício de corrida grátis só faz sentido mostrar no card do plano que o
-            // cliente já assinou de fato — pros outros planos, o benefício já aparece descrito na
-            // lista abaixo (vem do texto em Beneficios).
-            const corBeneficio = ehPlanoAtual && beneficio?.temBeneficio ? obterFaixa(beneficio.corBeneficio) : null
+            // Status do benefício de corrida grátis só faz sentido mostrar no card do plano ATIVO de
+            // verdade — pros outros planos (inclusive um pendente de pagamento), o benefício já aparece
+            // descrito na lista abaixo (vem do texto em Beneficios).
+            const corBeneficio = ativo && beneficio?.temBeneficio ? obterFaixa(beneficio.corBeneficio) : null
 
             return (
               <div
@@ -126,7 +140,7 @@ export default function PlanosPage() {
                   ))}
                 </ul>
 
-                {ehPlanoAtual ? (
+                {ativo ? (
                   <div className="flex flex-col gap-2">
                     <span className="rounded-lg border border-green-600 px-4 py-2 text-center text-sm font-medium text-green-700 dark:border-green-500 dark:text-green-400">
                       Seu plano atual
@@ -151,6 +165,30 @@ export default function PlanosPage() {
                       {processando === 'cancelar' ? 'Cancelando...' : 'Cancelar assinatura'}
                     </button>
                   </div>
+                ) : pendente ? (
+                  <div className="flex flex-col gap-2">
+                    <span className="rounded-lg border border-yellow-500 px-4 py-2 text-center text-sm font-medium text-yellow-700 dark:border-yellow-400 dark:text-yellow-400">
+                      Pagamento pendente
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={() => handleAssinar(plano.tipo, plano.nome)}
+                      disabled={processandoEsse}
+                      className={`rounded-lg px-4 py-2.5 text-sm font-medium text-white transition disabled:opacity-60 ${estilo.botao}`}
+                    >
+                      {processandoEsse ? 'Redirecionando...' : 'Continuar pagamento'}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleCancelar}
+                      disabled={processando === 'cancelar'}
+                      className="text-xs text-gray-400 hover:text-red-500 hover:underline disabled:opacity-50 dark:text-gray-500 dark:hover:text-red-400"
+                    >
+                      {processando === 'cancelar' ? 'Cancelando...' : 'Cancelar'}
+                    </button>
+                  </div>
                 ) : (
                   <button
                     type="button"
@@ -158,7 +196,7 @@ export default function PlanosPage() {
                     disabled={processandoEsse}
                     className={`rounded-lg px-4 py-2.5 text-sm font-medium text-white transition disabled:opacity-60 ${estilo.botao}`}
                   >
-                    {processandoEsse ? 'Assinando...' : 'Assinar'}
+                    {processandoEsse ? 'Redirecionando...' : 'Assinar'}
                   </button>
                 )}
               </div>
