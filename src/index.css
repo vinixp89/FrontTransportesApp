@@ -1,0 +1,49 @@
+/* Define a ordem de prioridade entre as camadas ANTES de importar qualquer CSS — em "cascade
+   layers" quem foi declarado por último sempre vence, então isso garante que o Bootstrap (reset
+   de "a", margens de h1-h6 etc.) fique abaixo das camadas do Tailwind e nunca sobrescreva as
+   classes utilitárias que o resto do site já usa. */
+@layer bootstrap, theme, base, components, utilities;
+
+@import "tailwindcss";
+
+/* CSS do Bootstrap, usado só na barra superior (AppNavbar) — o resto do site continua em
+   Tailwind. IMPORTANTE: não é o bundle padrão do Bootstrap — é uma versão recompilada localmente
+   (ver src/vendor/bootstrap-no-important.css) com $enable-important-utilities: false, porque o
+   bundle padrão marca TODAS as classes utilitárias dele (bg-white, shadow, border, text-white...)
+   como !important, e como algumas têm o mesmo nome de classes do Tailwind, o Bootstrap sempre
+   vencia — até por cima das variantes dark:. Sem o !important, a camada "bootstrap" (a de menor
+   prioridade, por causa do @layer acima) perde a disputa corretamente pro Tailwind quando os
+   nomes colidem. */
+@import "./vendor/bootstrap-no-important.css";
+
+/* Liga as variantes dark: do Tailwind pela classe "dark" no <html> (ver ThemeContext.jsx), em vez
+   de seguir o tema do sistema operacional — o site tem seu próprio botão de alternar tema. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: #f0fdf4;
+  color: #1f2430;
+  /* Silhueta de skyline bem sutil, fixa no rodapé da tela, atrás de todo o conteúdo — as páginas
+     não usam mais bg-green-50 no wrapper principal pra ela poder aparecer por trás. */
+  background-image: url('/skyline-bg.svg');
+  background-repeat: repeat-x;
+  background-position: bottom center;
+  background-size: 1600px auto;
+  background-attachment: fixed;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.dark body {
+  /* Cinza escuro neutro (mesma família do gray-800 usado nos cards) em vez do azul-marinho
+     anterior — combina melhor com os cards e fica mais suave que um preto puro. */
+  background-color: #111827;
+  color: #f3f4f6;
+  /* Mesma silhueta, mas em tom claro sobre o fundo escuro — se fosse a mesma cor verde escura
+     de antes, ficaria invisível num fundo já escuro. */
+  background-image: url('/skyline-bg-dark.svg');
+}
