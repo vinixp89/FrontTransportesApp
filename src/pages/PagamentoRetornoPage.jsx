@@ -46,11 +46,18 @@ export default function PagamentoRetornoPage() {
       return { titulo: 'Não foi possível confirmar', descricao: erro, cor: 'text-red-600 dark:text-red-400' }
     }
 
+    // A descrição vem do backend (ex: "Assinatura do plano Premium — Vai na Boa" ou "Recarga de
+    // carteira — Vai na Boa") — a tela é genérica de propósito, pra servir qualquer tipo de pagamento
+    // (planos, carteira, e o que mais entrar nesse fluxo no futuro) sem precisar saber qual é.
+    const descricaoPagamento = statusPagamento?.descricao
+
     switch (statusPagamento?.status) {
       case STATUS_PAGAMENTO.APROVADO:
         return {
           titulo: 'Pagamento aprovado!',
-          descricao: 'Sua assinatura já está ativa — aproveite os benefícios do seu plano.',
+          descricao: descricaoPagamento
+            ? `${descricaoPagamento} confirmado com sucesso.`
+            : 'Seu pagamento foi confirmado com sucesso.',
           cor: 'text-green-600 dark:text-green-400',
         }
       case STATUS_PAGAMENTO.RECUSADO:
@@ -69,13 +76,13 @@ export default function PagamentoRetornoPage() {
       case STATUS_PAGAMENTO.PENDENTE:
         return {
           titulo: 'Pagamento em análise',
-          descricao: 'O Mercado Pago ainda está processando esse pagamento (comum em boleto/Pix). Assim que for aprovado, sua assinatura ativa automaticamente.',
+          descricao: 'O Mercado Pago ainda está processando esse pagamento (comum em boleto/Pix). Assim que for aprovado, isso é confirmado automaticamente.',
           cor: 'text-yellow-600 dark:text-yellow-400',
         }
       default:
         return {
           titulo: 'Status desconhecido',
-          descricao: 'Não conseguimos identificar o status desse pagamento — confira a tela de planos em alguns instantes.',
+          descricao: 'Não conseguimos identificar o status desse pagamento — confira novamente em alguns instantes.',
           cor: 'text-gray-500 dark:text-gray-400',
         }
     }
@@ -93,10 +100,10 @@ export default function PagamentoRetornoPage() {
           <p className="mt-3 text-sm text-gray-600 dark:text-gray-300">{conteudo.descricao}</p>
 
           <Link
-            to="/planos"
+            to="/"
             className="mt-6 inline-block rounded-lg bg-green-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-green-700"
           >
-            Ver meus planos
+            Voltar ao início
           </Link>
         </div>
       </main>

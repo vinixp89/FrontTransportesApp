@@ -13,7 +13,6 @@ export default function CarteiraPage() {
   const [valor, setValor] = useState('')
   const [recarregando, setRecarregando] = useState(false)
   const [erro, setErro] = useState('')
-  const [mensagemSucesso, setMensagemSucesso] = useState('')
 
   function carregarCarteira() {
     return api
@@ -29,7 +28,6 @@ export default function CarteiraPage() {
   async function handleRecarregar(event) {
     event.preventDefault()
     setErro('')
-    setMensagemSucesso('')
 
     const valorNumerico = Number(valor.replace(',', '.'))
 
@@ -41,13 +39,13 @@ export default function CarteiraPage() {
     setRecarregando(true)
 
     try {
+      // Não credita mais na hora — o backend cria um pagamento no Mercado Pago e devolve a URL de
+      // checkout pra redirecionar. O saldo só aparece atualizado depois que o pagamento for
+      // confirmado (ver PagamentoRetornoPage, pra onde o Mercado Pago traz o cliente de volta).
       const { data } = await api.post('/Carteiras/recarregar', { valor: valorNumerico })
-      setCarteira(data)
-      setValor('')
-      setMensagemSucesso(`Recarga de ${formatarPreco(valorNumerico)} feita com sucesso!`)
+      window.location.href = data.checkoutUrl
     } catch (error) {
       setErro(extrairMensagemErro(error))
-    } finally {
       setRecarregando(false)
     }
   }
@@ -100,22 +98,19 @@ export default function CarteiraPage() {
           />
 
           {erro && <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">{erro}</p>}
-          {mensagemSucesso && (
-            <p className="mb-4 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700 dark:bg-green-950 dark:text-green-300">{mensagemSucesso}</p>
-          )}
 
           <button
             type="submit"
             disabled={recarregando}
             className="w-full rounded-lg bg-green-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-green-700 disabled:opacity-60"
           >
-            {recarregando ? 'Recarregando...' : 'Recarregar'}
+            {recarregando ? 'Redirecionando...' : 'Recarregar'}
           </button>
         </form>
 
         <p className="mt-3 text-center text-xs text-gray-400 dark:text-gray-500">
-          Por enquanto a recarga só adiciona saldo — usar o saldo pra pagar corridas ainda não está
-          disponível.
+          O saldo da carteira é usado automaticamente pra pagar corridas avulsas — sem precisar passar
+          pelo Mercado Pago a cada corrida.
         </p>
 
         <Link to="/extrato" className="mt-4 block text-center text-sm text-green-600 hover:underline dark:text-green-400">

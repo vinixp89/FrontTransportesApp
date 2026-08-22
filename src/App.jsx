@@ -76,7 +76,7 @@ function App() {
               }
             />
             <Route
-              path="/planos/retorno"
+              path="/pagamentos/retorno"
               element={
                 <ProtectedRoute role="Cliente">
                   <PagamentoRetornoPage />
