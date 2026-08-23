@@ -37,7 +37,19 @@ export default function HomePage() {
         </p>
 
         {ehMotorista ? (
-          <MotoristaOnlineCard />
+          <div className="flex flex-wrap gap-4">
+            <MotoristaOnlineCard />
+
+            <Link
+              to="/motorista/extrato"
+              className="flex h-32 w-32 flex-col items-center justify-center gap-1.5 rounded-2xl bg-white p-3 text-center shadow-lg transition hover:bg-purple-50 dark:bg-gray-800 dark:hover:bg-gray-700"
+            >
+              <span className="text-2xl">📄</span>
+              <span className="text-sm font-semibold text-purple-700 dark:text-purple-300">
+                Extrato de corridas
+              </span>
+            </Link>
+          </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {usuario.roles.includes('Cliente') ? (

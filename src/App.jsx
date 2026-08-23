@@ -11,6 +11,7 @@ import CarteiraPage from './pages/CarteiraPage'
 import ExtratoPage from './pages/ExtratoPage'
 import PlanosPage from './pages/PlanosPage'
 import PagamentoRetornoPage from './pages/PagamentoRetornoPage'
+import ExtratoCorridasPage from './pages/ExtratoCorridasPage'
 
 function App() {
   return (
@@ -80,6 +81,14 @@ function App() {
               element={
                 <ProtectedRoute role="Cliente">
                   <PagamentoRetornoPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/motorista/extrato"
+              element={
+                <ProtectedRoute role="Motorista">
+                  <ExtratoCorridasPage />
                 </ProtectedRoute>
               }
             />
