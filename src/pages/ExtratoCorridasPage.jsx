@@ -31,7 +31,7 @@ export default function ExtratoCorridasPage() {
   return (
     <div className="min-h-screen bg-purple-50 pb-16 dark:bg-purple-950">
       <AppNavbar titulo="Extrato de corridas">
-        <ThemeToggleButton />
+        <ThemeToggleButton variant="purple" />
       </AppNavbar>
 
       <main className="mx-auto mt-8 max-w-2xl px-4">
