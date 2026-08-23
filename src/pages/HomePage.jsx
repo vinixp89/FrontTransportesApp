@@ -13,7 +13,7 @@ export default function HomePage() {
     // Perfil Motorista tem a cor de marca roxa (ver constants/brand.js) — aqui isso vira o fundo
     // da página inteira, por cima do verde padrão que o body já usa pra tela do cliente.
     <div className={`min-h-screen ${ehMotorista ? 'bg-purple-50 dark:bg-purple-950' : ''}`}>
-      <AppNavbar brand>
+      <AppNavbar brand variantLogo={ehMotorista ? 'purple' : 'padrao'}>
         <ThemeToggleButton variant={ehMotorista ? 'purple' : 'neutro'} />
         {ehMotorista ? (
           // UserMenu leva pra telas exclusivas de Cliente (extrato, saldo de corrida, carteira),

@@ -6,7 +6,7 @@ import BrandLogo from './BrandLogo'
 // encolhe, ganha mais opacidade/blur e uma sombra leve — dá a sensação de flutuar sobre o
 // conteúdo em vez de só ficar fixa e estática. Usa classes do Bootstrap (navbar, container-fluid)
 // pra estrutura, e Tailwind pro tema claro/escuro — as duas libs convivem numa classe só.
-export default function AppNavbar({ titulo, brand = false, children }) {
+export default function AppNavbar({ titulo, brand = false, variantLogo = 'padrao', children }) {
   const [rolou, setRolou] = useState(false)
 
   useEffect(() => {
@@ -29,7 +29,7 @@ export default function AppNavbar({ titulo, brand = false, children }) {
       <div className="container-fluid d-flex align-items-center justify-content-between px-0">
         <div className="d-flex align-items-center gap-3">
           {brand ? (
-            <BrandLogo tamanho={rolou ? 24 : 28} />
+            <BrandLogo tamanho={rolou ? 24 : 28} variant={variantLogo} />
           ) : (
             <>
               <Link to="/" className="text-decoration-none small text-success fw-medium dark:text-green-400">
