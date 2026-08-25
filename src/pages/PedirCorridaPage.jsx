@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import api, { extrairMensagemErro } from '../api/client'
 import EnderecoFields, { enderecoVazio } from '../components/EnderecoFields'
 import RideConfirmCard from '../components/RideConfirmCard'
@@ -9,7 +10,10 @@ import AppNavbar from '../components/AppNavbar'
 const TIPO_CONSUMO = { AVULSA: 0, PACOTE: 1, BENEFICIO: 2 }
 
 export default function PedirCorridaPage() {
-  // 'form' -> preenchendo endereços | 'confirmando' -> revisando estimativa | 'confirmado' -> criada
+  const navigate = useNavigate()
+
+  // 'form' -> preenchendo endereços | 'confirmando' -> revisando estimativa
+  // (ao confirmar, navega pra /corrida/:id em vez de ficar numa 3ª etapa aqui)
   const [etapa, setEtapa] = useState('form')
 
   const [origem, setOrigem] = useState(enderecoVazio)
@@ -116,44 +120,20 @@ export default function PedirCorridaPage() {
     setConfirmando(true)
 
     try {
-      await api.post('/Corridas', {
+      const { data } = await api.post('/Corridas', {
         origem,
         destino,
         tipoConsumo,
         pacoteCorridasId: tipoConsumo === TIPO_CONSUMO.PACOTE ? pacoteCorridasId : null,
       })
 
-      setEtapa('confirmado')
-
-      // Qualquer corrida (grátis ou paga) muda o status do benefício do plano — grátis consome o
-      // benefício do mês, paga pode liberar ele. Busca de novo pra próxima corrida já vir atualizada.
-      api
-        .get('/Planos/beneficio')
-        .then(({ data }) => setBeneficio(data))
-        .catch(() => {})
-
-      // Corrida avulsa debitou da carteira — atualiza o saldo mostrado, mesma ideia do benefício acima.
-      if (tipoConsumo === TIPO_CONSUMO.AVULSA) {
-        api
-          .get('/Carteiras/minha-carteira')
-          .then(({ data }) => setCarteira(data))
-          .catch(() => {})
-      }
+      // Daqui pra frente quem cuida do status da corrida (motorista aceitar, se deslocar até o
+      // cliente, etc) é a tela de acompanhamento — ela já faz o polling sozinha.
+      navigate(`/corrida/${data.id}`)
     } catch (error) {
       setErro(extrairMensagemErro(error))
-    } finally {
       setConfirmando(false)
     }
-  }
-
-  function handleNovaCorrida() {
-    setEtapa('form')
-    setOrigem(enderecoVazio)
-    setDestino(enderecoVazio)
-    setTipoConsumo(TIPO_CONSUMO.AVULSA)
-    setPacoteCorridasId('')
-    setEstimativa(null)
-    setErro('')
   }
 
   return (
@@ -261,7 +241,7 @@ export default function PedirCorridaPage() {
           </form>
         )}
 
-        {(etapa === 'confirmando' || etapa === 'confirmado') && estimativa && (
+        {etapa === 'confirmando' && estimativa && (
           <RideConfirmCard
             estimativa={estimativa}
             modo={etapa}
@@ -272,16 +252,6 @@ export default function PedirCorridaPage() {
             bloqueado={Boolean(erroFaixaPacote || erroFaixaBeneficio || erroSaldoAvulsa)}
             gratisPlano={tipoConsumo === TIPO_CONSUMO.BENEFICIO}
           />
-        )}
-
-        {etapa === 'confirmado' && (
-          <button
-            type="button"
-            onClick={handleNovaCorrida}
-            className="mt-4 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-          >
-            Pedir outra corrida
-          </button>
         )}
       </main>
     </div>

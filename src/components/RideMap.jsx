@@ -60,7 +60,11 @@ function useTrajetoRodovia(origem, destino) {
 // Mapa (Leaflet + OpenStreetMap/CARTO, sem chave de API) mostrando origem, destino e o trajeto
 // entre eles seguindo as ruas (via OSRM). Se o trajeto real não carregar a tempo, mostra uma linha
 // reta entre os dois pontos como alternativa, em vez de deixar o mapa vazio.
-export default function RideMap({ origem, destino, corHex }) {
+//
+// motoristaPos (opcional) é [latitude, longitude] do motorista a caminho — usado pela tela de
+// acompanhar corrida (AcompanharCorridaPage) pra mostrar ele se deslocando em tempo real, sempre
+// dentro do enquadramento junto com origem/destino.
+export default function RideMap({ origem, destino, corHex, motoristaPos = null }) {
   const { tema } = useTheme()
 
   const origemLatLng = [origem.latitude, origem.longitude]
@@ -68,6 +72,7 @@ export default function RideMap({ origem, destino, corHex }) {
 
   const trajetoRodovia = useTrajetoRodovia(origem, destino)
   const linha = trajetoRodovia ?? [origemLatLng, destinoLatLng]
+  const pontosEnquadramento = motoristaPos ? [...linha, motoristaPos] : linha
 
   return (
     <div className="h-40 w-full overflow-hidden rounded-xl">
@@ -83,6 +88,13 @@ export default function RideMap({ origem, destino, corHex }) {
         <TileLayer url={TILES[tema]} />
         <CircleMarker center={origemLatLng} radius={7} pathOptions={{ color: '#38bdf8', fillColor: '#38bdf8', fillOpacity: 1 }} />
         <CircleMarker center={destinoLatLng} radius={7} pathOptions={{ color: corHex, fillColor: corHex, fillOpacity: 1 }} />
+        {motoristaPos && (
+          <CircleMarker
+            center={motoristaPos}
+            radius={8}
+            pathOptions={{ color: '#9333ea', fillColor: '#9333ea', fillOpacity: 1, weight: 2 }}
+          />
+        )}
         <Polyline
           positions={linha}
           pathOptions={
@@ -91,7 +103,7 @@ export default function RideMap({ origem, destino, corHex }) {
               : { color: corHex, weight: 3, dashArray: '6 6' }
           }
         />
-        <AjustarEnquadramento pontos={linha} />
+        <AjustarEnquadramento pontos={pontosEnquadramento} />
       </MapContainer>
     </div>
   )

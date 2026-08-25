@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import api, { extrairMensagemErro } from '../api/client'
 
 // StatusMotorista é serializado como número pelo backend (TransportesApp.Domain/Enums/Enums.cs):
@@ -12,6 +12,37 @@ export default function MotoristaOnlineCard() {
   const [online, setOnline] = useState(false)
   const [carregando, setCarregando] = useState(false)
   const [erro, setErro] = useState('')
+  const watchIdRef = useRef(null)
+
+  // Enquanto online, manda a localização pro backend sempre que o navegador reportar uma posição
+  // nova (PATCH /Motoristas/localizacao) — usada tanto pra listagem de motoristas próximos
+  // (disponiveis-resumo) quanto pro cliente acompanhar o motorista se deslocando numa corrida.
+  useEffect(() => {
+    if (!online || !navigator.geolocation) return
+
+    watchIdRef.current = navigator.geolocation.watchPosition(
+      (posicao) => {
+        api
+          .patch('/Motoristas/localizacao', {
+            latitude: posicao.coords.latitude,
+            longitude: posicao.coords.longitude,
+          })
+          .catch(() => {
+            // Falha isolada de uma atualização não trava o app — a próxima posição reportada
+            // pelo navegador tenta de novo.
+          })
+      },
+      () => setErro('Não foi possível acessar sua localização. Verifique a permissão do navegador.'),
+      { enableHighAccuracy: true, maximumAge: 10000 }
+    )
+
+    return () => {
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current)
+        watchIdRef.current = null
+      }
+    }
+  }, [online])
 
   async function handleAlternar() {
     setCarregando(true)

@@ -41,6 +41,16 @@ export default function HomePage() {
             <MotoristaOnlineCard />
 
             <Link
+              to="/motorista/corridas"
+              className="flex h-32 w-32 flex-col items-center justify-center gap-1.5 rounded-2xl bg-white p-3 text-center shadow-lg transition hover:bg-purple-50 dark:bg-gray-800 dark:hover:bg-gray-700"
+            >
+              <span className="text-2xl">🚗</span>
+              <span className="text-sm font-semibold text-purple-700 dark:text-purple-300">
+                Corridas
+              </span>
+            </Link>
+
+            <Link
               to="/motorista/extrato"
               className="flex h-32 w-32 flex-col items-center justify-center gap-1.5 rounded-2xl bg-white p-3 text-center shadow-lg transition hover:bg-purple-50 dark:bg-gray-800 dark:hover:bg-gray-700"
             >

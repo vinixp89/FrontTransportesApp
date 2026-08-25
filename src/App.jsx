@@ -5,6 +5,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import LoginPage from './pages/LoginPage'
 import HomePage from './pages/HomePage'
 import PedirCorridaPage from './pages/PedirCorridaPage'
+import AcompanharCorridaPage from './pages/AcompanharCorridaPage'
 import PacotesPage from './pages/PacotesPage'
 import SaldoCorridaPage from './pages/SaldoCorridaPage'
 import CarteiraPage from './pages/CarteiraPage'
@@ -12,6 +13,7 @@ import ExtratoPage from './pages/ExtratoPage'
 import PlanosPage from './pages/PlanosPage'
 import PagamentoRetornoPage from './pages/PagamentoRetornoPage'
 import ExtratoCorridasPage from './pages/ExtratoCorridasPage'
+import CorridasMotoristaPage from './pages/CorridasMotoristaPage'
 
 function App() {
   return (
@@ -33,6 +35,14 @@ function App() {
               element={
                 <ProtectedRoute role="Cliente">
                   <PedirCorridaPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/corrida/:id"
+              element={
+                <ProtectedRoute role="Cliente">
+                  <AcompanharCorridaPage />
                 </ProtectedRoute>
               }
             />
@@ -89,6 +99,14 @@ function App() {
               element={
                 <ProtectedRoute role="Motorista">
                   <ExtratoCorridasPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/motorista/corridas"
+              element={
+                <ProtectedRoute role="Motorista">
+                  <CorridasMotoristaPage />
                 </ProtectedRoute>
               }
             />

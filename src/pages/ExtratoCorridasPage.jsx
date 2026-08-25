@@ -1,19 +1,9 @@
 import api, { extrairMensagemErro } from '../api/client'
 import { useEffect, useState } from 'react'
 import { obterFaixa, formatarPreco } from '../constants/faixas'
+import { obterStatusLabel } from '../constants/statusCorrida'
 import ThemeToggleButton from '../components/ThemeToggleButton'
 import AppNavbar from '../components/AppNavbar'
-
-// StatusCorrida vem serializado como número (TransportesApp.Domain/Enums/Enums.cs):
-// 0 Solicitada, 1 Confirmada, 2 MotoristaACaminho, 3 EmAndamento, 4 Finalizada, 5 Cancelada.
-const STATUS_LABEL = {
-  0: { texto: 'Solicitada', cor: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200' },
-  1: { texto: 'Confirmada', cor: 'bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300' },
-  2: { texto: 'A caminho', cor: 'bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300' },
-  3: { texto: 'Em andamento', cor: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-950 dark:text-yellow-300' },
-  4: { texto: 'Finalizada', cor: 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300' },
-  5: { texto: 'Cancelada', cor: 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300' },
-}
 
 export default function ExtratoCorridasPage() {
   const [corridas, setCorridas] = useState([])
@@ -54,7 +44,7 @@ export default function ExtratoCorridasPage() {
           <div className="overflow-hidden rounded-2xl bg-white shadow dark:bg-gray-800">
             {corridas.map((c, indice) => {
               const faixa = obterFaixa(c.faixaContratada)
-              const status = STATUS_LABEL[c.status] ?? STATUS_LABEL[0]
+              const status = obterStatusLabel(c.status)
 
               return (
                 <div
