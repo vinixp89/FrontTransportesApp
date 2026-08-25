@@ -20,6 +20,7 @@ export default function CorridasMotoristaPage() {
   const [iniciando, setIniciando] = useState(false)
   const [finalizando, setFinalizando] = useState(false)
   const [distanciaReal, setDistanciaReal] = useState('')
+  const [codigo, setCodigo] = useState('')
   const intervaloRef = useRef(null)
 
   const buscar = useCallback(async () => {
@@ -48,7 +49,10 @@ export default function CorridasMotoristaPage() {
   }, [buscar])
 
   useEffect(() => {
-    if (corridaAtual) setDistanciaReal(String(corridaAtual.distanciaEstimadaKm.toFixed(1)))
+    if (corridaAtual) {
+      setDistanciaReal(String(corridaAtual.distanciaEstimadaKm.toFixed(1)))
+      setCodigo('')
+    }
   }, [corridaAtual?.id])
 
   async function handleAceitar(id) {
@@ -66,13 +70,15 @@ export default function CorridasMotoristaPage() {
     }
   }
 
-  async function handleIniciar() {
+  async function handleIniciar(event) {
+    event.preventDefault()
     setIniciando(true)
     setErro('')
 
     try {
-      const { data } = await api.patch(`/Corridas/${corridaAtual.id}/iniciar`)
+      const { data } = await api.patch(`/Corridas/${corridaAtual.id}/iniciar`, { codigo })
       setCorridaAtual(data)
+      setCodigo('')
     } catch (error) {
       setErro(extrairMensagemErro(error))
     } finally {
@@ -119,6 +125,8 @@ export default function CorridasMotoristaPage() {
             iniciando={iniciando}
             finalizando={finalizando}
             distanciaReal={distanciaReal}
+            codigo={codigo}
+            onCodigoChange={setCodigo}
             onDistanciaChange={setDistanciaReal}
             onIniciar={handleIniciar}
             onFinalizar={handleFinalizar}
@@ -183,7 +191,17 @@ export default function CorridasMotoristaPage() {
 // StatusCorrida: 1 Confirmada (aceita, motorista a caminho), 3 EmAndamento (viagem rolando).
 const STATUS_CONFIRMADA = 1
 
-function CorridaAtualPainel({ corrida, iniciando, finalizando, distanciaReal, onDistanciaChange, onIniciar, onFinalizar }) {
+function CorridaAtualPainel({
+  corrida,
+  iniciando,
+  finalizando,
+  distanciaReal,
+  codigo,
+  onCodigoChange,
+  onDistanciaChange,
+  onIniciar,
+  onFinalizar,
+}) {
   const faixa = obterFaixa(corrida.faixaContratada)
   const status = obterStatusLabel(corrida.status)
 
@@ -223,14 +241,28 @@ function CorridaAtualPainel({ corrida, iniciando, finalizando, distanciaReal, on
       </div>
 
       {corrida.status === STATUS_CONFIRMADA ? (
-        <button
-          type="button"
-          onClick={onIniciar}
-          disabled={iniciando}
-          className="mt-5 w-full rounded-lg bg-purple-600 py-2.5 text-sm font-semibold text-white transition hover:bg-purple-700 disabled:opacity-60"
-        >
-          {iniciando ? 'Iniciando...' : 'Iniciar viagem'}
-        </button>
+        <form onSubmit={onIniciar} className="mt-5 space-y-3">
+          <label className="block text-sm text-gray-600 dark:text-gray-300">
+            Código informado pelo cliente
+            <input
+              type="text"
+              inputMode="numeric"
+              maxLength={4}
+              required
+              placeholder="0000"
+              value={codigo}
+              onChange={(e) => onCodigoChange(e.target.value.replace(/\D/g, '').slice(0, 4))}
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-center text-lg tracking-[0.5em] dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+            />
+          </label>
+          <button
+            type="submit"
+            disabled={iniciando || codigo.length !== 4}
+            className="w-full rounded-lg bg-purple-600 py-2.5 text-sm font-semibold text-white transition hover:bg-purple-700 disabled:opacity-60"
+          >
+            {iniciando ? 'Iniciando...' : 'Iniciar viagem'}
+          </button>
+        </form>
       ) : (
         <form onSubmit={onFinalizar} className="mt-5 space-y-3">
           <label className="block text-sm text-gray-600 dark:text-gray-300">

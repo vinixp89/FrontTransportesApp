@@ -13,6 +13,9 @@ const STATUS_FINAIS = [4, 5]
 // Status com motorista já atribuído — só aí existe localização pra buscar (ver
 // CorridasController.ObterLocalizacaoMotorista no backend).
 const STATUS_COM_MOTORISTA = [1, 2, 3]
+// Confirmada (motorista aceitou, ainda não iniciou) — só nesse status o código de confirmação
+// ainda é útil de mostrar (depois de EmAndamento ele já cumpriu o papel dele).
+const STATUS_CONFIRMADA = 1
 const INTERVALO_MS = 4000
 
 // Tela de acompanhar a corrida depois de confirmada: consulta o status periodicamente e, assim
@@ -24,6 +27,7 @@ export default function AcompanharCorridaPage() {
 
   const [corrida, setCorrida] = useState(null)
   const [motorista, setMotorista] = useState(null)
+  const [codigo, setCodigo] = useState('')
   const [erro, setErro] = useState('')
   const [cancelando, setCancelando] = useState(false)
   const intervaloRef = useRef(null)
@@ -32,6 +36,16 @@ export default function AcompanharCorridaPage() {
     try {
       const { data } = await api.get(`/Corridas/${id}`)
       setCorrida(data)
+
+      // Só busca uma vez (assim que confirma) — não precisa ficar repetindo a cada polling.
+      if (data.status === STATUS_CONFIRMADA && !codigo) {
+        try {
+          const { data: resposta } = await api.get(`/Corridas/${id}/codigo-confirmacao`)
+          setCodigo(resposta.codigo)
+        } catch {
+          // Sem sorte agora — tenta de novo no próximo polling.
+        }
+      }
 
       if (STATUS_COM_MOTORISTA.includes(data.status)) {
         try {
@@ -51,7 +65,7 @@ export default function AcompanharCorridaPage() {
     } catch (error) {
       setErro(extrairMensagemErro(error))
     }
-  }, [id])
+  }, [id, codigo])
 
   useEffect(() => {
     buscar()
@@ -119,6 +133,17 @@ export default function AcompanharCorridaPage() {
               {status.texto}
             </span>
           </div>
+
+          {codigo && corrida.status === STATUS_CONFIRMADA && (
+            <div className="mx-5 mt-4 rounded-xl border-2 border-dashed border-purple-300 bg-purple-50 px-4 py-3 text-center dark:border-purple-800 dark:bg-purple-950">
+              <p className="text-xs font-medium text-purple-700 dark:text-purple-300">
+                Fale esse código pro motorista antes dele iniciar a viagem
+              </p>
+              <p className="mt-1 text-3xl font-bold tracking-[0.4em] text-purple-800 dark:text-purple-200">
+                {codigo}
+              </p>
+            </div>
+          )}
 
           <div className="space-y-2 px-5 pt-4">
             <div className="flex items-start gap-3">
