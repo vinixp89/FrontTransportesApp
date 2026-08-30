@@ -115,6 +115,16 @@ export default function HomePage() {
                     Assine um plano e ganhe desconto e prioridade nas corridas.
                   </p>
                 </Link>
+
+                <Link
+                  to="/doar-corrida"
+                  className="rounded-2xl bg-pink-500 p-6 text-white shadow-lg transition hover:bg-pink-600"
+                >
+                  <h3 className="text-lg font-semibold">Doar corrida</h3>
+                  <p className="mt-1 text-sm text-pink-50">
+                    Presenteie outra pessoa com uma corrida — sai do seu saldo em reais.
+                  </p>
+                </Link>
               </>
             ) : (
               !usuario.roles.includes('Admin') && (

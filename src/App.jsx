@@ -16,6 +16,7 @@ import ExtratoCorridasPage from './pages/ExtratoCorridasPage'
 import CorridasMotoristaPage from './pages/CorridasMotoristaPage'
 import AdminCorridasPage from './pages/AdminCorridasPage'
 import MotoristaExecutivoPage from './pages/MotoristaExecutivoPage'
+import DoarCorridaPage from './pages/DoarCorridaPage'
 
 function App() {
   return (
@@ -125,6 +126,14 @@ function App() {
               element={
                 <ProtectedRoute role="Motorista">
                   <MotoristaExecutivoPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/doar-corrida"
+              element={
+                <ProtectedRoute role="Cliente">
+                  <DoarCorridaPage />
                 </ProtectedRoute>
               }
             />
