@@ -61,12 +61,12 @@ export default function HomePage() {
             </Link>
 
             <Link
-              to="/motorista/black"
+              to="/motorista/executivo"
               className="flex h-32 w-32 flex-col items-center justify-center gap-1.5 rounded-2xl bg-gray-900 p-3 text-center shadow-lg transition hover:bg-gray-800"
             >
               <span className="text-2xl">⭐</span>
               <span className="text-sm font-semibold text-white">
-                Categoria Black
+                Categoria Executivo
               </span>
             </Link>
           </div>

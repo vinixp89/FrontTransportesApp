@@ -133,7 +133,7 @@ export default function AdminCorridasPage() {
                       <td className="whitespace-nowrap px-4 py-3">
                         {c.categoria === 1 ? (
                           <span className="inline-block rounded-full bg-gray-900 px-2 py-0.5 text-xs font-medium text-white dark:bg-white dark:text-gray-900">
-                            Black
+                            Executivo
                           </span>
                         ) : (
                           <span className="text-xs text-gray-400 dark:text-gray-500">Normal</span>

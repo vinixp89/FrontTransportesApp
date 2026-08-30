@@ -55,7 +55,7 @@ export default function RideConfirmCard({
           </span>
           {estimativa.categoria === 1 && (
             <span className="rounded-md bg-gray-900 px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-white dark:bg-white dark:text-gray-900">
-              Black
+              Executivo
             </span>
           )}
         </div>

@@ -7,10 +7,10 @@ import AppNavbar from '../components/AppNavbar'
 
 const ANO_ATUAL = new Date().getFullYear()
 
-// Assinatura da categoria Black do motorista — veículo até 3 anos (sedan médio ou SUV), R$49,90,
+// Assinatura da categoria Executivo do motorista — veículo até 3 anos (sedan médio ou SUV), R$49,90,
 // pagamento único via Mercado Pago (mesmo fluxo do Planos do cliente, ver PlanosPage). Só depois de
-// confirmada é que o motorista passa a ver/aceitar corridas Black (ver CorridaService no backend).
-export default function MotoristaBlackPage() {
+// confirmada é que o motorista passa a ver/aceitar corridas Executivo (ver CorridaService no backend).
+export default function MotoristaExecutivoPage() {
   const [assinatura, setAssinatura] = useState(null)
   const [anoVeiculo, setAnoVeiculo] = useState(String(ANO_ATUAL))
   const [carregando, setCarregando] = useState(true)
@@ -21,7 +21,7 @@ export default function MotoristaBlackPage() {
 
   useEffect(() => {
     api
-      .get('/Motoristas/black/assinatura')
+      .get('/Motoristas/executivo/assinatura')
       .then(({ data }) => setAssinatura(data))
       .catch((error) => setErro(extrairMensagemErro(error)))
       .finally(() => setCarregando(false))
@@ -37,17 +37,17 @@ export default function MotoristaBlackPage() {
     setMensagemSucesso('')
 
     try {
-      const { data } = await api.post('/Motoristas/black/assinar', { anoVeiculo: Number(anoVeiculo) })
+      const { data } = await api.post('/Motoristas/executivo/assinar', { anoVeiculo: Number(anoVeiculo) })
 
       // O backend só devolve checkoutUrl quando tem pagamento pra fazer — se o motorista já tinha
-      // assinatura ativa, vem null e nada a pagar de novo (ver AssinaturaMotoristaBlackService).
+      // assinatura ativa, vem null e nada a pagar de novo (ver AssinaturaMotoristaExecutivoService).
       if (data.checkoutUrl) {
         window.location.href = data.checkoutUrl
         return
       }
 
       setAssinatura(data.assinatura)
-      setMensagemSucesso('Assinatura Black confirmada!')
+      setMensagemSucesso('Assinatura Executivo confirmada!')
     } catch (error) {
       setErro(extrairMensagemErro(error))
     } finally {
@@ -61,9 +61,9 @@ export default function MotoristaBlackPage() {
     setMensagemSucesso('')
 
     try {
-      await api.post('/Motoristas/black/cancelar')
+      await api.post('/Motoristas/executivo/cancelar')
       setAssinatura(null)
-      setMensagemSucesso('Assinatura Black cancelada.')
+      setMensagemSucesso('Assinatura Executivo cancelada.')
     } catch (error) {
       setErro(extrairMensagemErro(error))
     } finally {
@@ -73,13 +73,13 @@ export default function MotoristaBlackPage() {
 
   return (
     <div className="min-h-screen bg-purple-50 pb-16 dark:bg-purple-950">
-      <AppNavbar titulo="Categoria Black">
+      <AppNavbar titulo="Categoria Executivo">
         <ThemeToggleButton variant="purple" />
       </AppNavbar>
 
       <main className="mx-auto mt-8 max-w-md px-4">
         <div className="overflow-hidden rounded-2xl bg-gray-900 p-6 text-white shadow-xl">
-          <h2 className="text-lg font-bold uppercase tracking-wide">Black</h2>
+          <h2 className="text-lg font-bold uppercase tracking-wide">Executivo</h2>
           <p className="mt-1 text-3xl font-bold">{formatarPreco(49.9)}<span className="text-sm font-normal text-gray-400">/mês</span></p>
           <ul className="mt-4 space-y-1.5 text-sm text-gray-300">
             <li>• Corridas com valor mais alto por faixa</li>
@@ -105,7 +105,7 @@ export default function MotoristaBlackPage() {
           {!carregando && ativa && (
             <div className="flex flex-col gap-3">
               <span className="rounded-lg border border-green-600 px-4 py-2 text-center text-sm font-medium text-green-700 dark:border-green-500 dark:text-green-400">
-                Assinatura Black ativa
+                Assinatura Executivo ativa
               </span>
               <button
                 type="button"
@@ -147,7 +147,7 @@ export default function MotoristaBlackPage() {
                 disabled={processando}
                 className="rounded-lg bg-gray-900 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:opacity-60 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
               >
-                {processando ? 'Redirecionando...' : pendente ? 'Continuar pagamento' : 'Assinar Black'}
+                {processando ? 'Redirecionando...' : pendente ? 'Continuar pagamento' : 'Assinar Executivo'}
               </button>
             </form>
           )}
