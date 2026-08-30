@@ -8,6 +8,7 @@ import ThemeToggleButton from '../components/ThemeToggleButton'
 import AppNavbar from '../components/AppNavbar'
 
 const TIPO_CONSUMO = { AVULSA: 0, PACOTE: 1, BENEFICIO: 2 }
+const CATEGORIA = { NORMAL: 0, BLACK: 1 }
 
 export default function PedirCorridaPage() {
   const navigate = useNavigate()
@@ -18,6 +19,7 @@ export default function PedirCorridaPage() {
 
   const [origem, setOrigem] = useState(enderecoVazio)
   const [destino, setDestino] = useState(enderecoVazio)
+  const [categoria, setCategoria] = useState(CATEGORIA.NORMAL)
   const [tipoConsumo, setTipoConsumo] = useState(TIPO_CONSUMO.AVULSA)
   const [pacotes, setPacotes] = useState([])
   const [pacoteCorridasId, setPacoteCorridasId] = useState('')
@@ -28,6 +30,15 @@ export default function PedirCorridaPage() {
   const [confirmando, setConfirmando] = useState(false)
   const [erro, setErro] = useState('')
   const [estimativa, setEstimativa] = useState(null)
+
+  // Categoria Black só existe como corrida avulsa por enquanto (ver CorridaService.CriarAsync no
+  // backend) — trava a forma de pagamento em avulsa automaticamente pra não deixar o cliente
+  // escolher uma combinação que o backend vai recusar.
+  useEffect(() => {
+    if (categoria === CATEGORIA.BLACK && tipoConsumo !== TIPO_CONSUMO.AVULSA) {
+      setTipoConsumo(TIPO_CONSUMO.AVULSA)
+    }
+  }, [categoria, tipoConsumo])
 
   // Só busca os pacotes do cliente quando ele escolhe pagar com pacote — evita uma chamada à toa.
   useEffect(() => {
@@ -105,7 +116,7 @@ export default function PedirCorridaPage() {
     setEstimando(true)
 
     try {
-      const { data } = await api.post('/Corridas/estimar', { origem, destino })
+      const { data } = await api.post('/Corridas/estimar', { origem, destino, categoria })
       setEstimativa(data)
       setEtapa('confirmando')
     } catch (error) {
@@ -125,6 +136,7 @@ export default function PedirCorridaPage() {
         destino,
         tipoConsumo,
         pacoteCorridasId: tipoConsumo === TIPO_CONSUMO.PACOTE ? pacoteCorridasId : null,
+        categoria,
       })
 
       // Daqui pra frente quem cuida do status da corrida (motorista aceitar, se deslocar até o
@@ -149,6 +161,36 @@ export default function PedirCorridaPage() {
             <EnderecoFields titulo="Destino" valores={destino} onChange={setDestino} />
 
             <fieldset className="rounded-xl border border-gray-200 p-4 dark:border-gray-600">
+              <legend className="px-1 text-sm font-medium text-gray-700 dark:text-gray-300">Categoria</legend>
+
+              <div className="flex gap-4 text-sm text-gray-700 dark:text-gray-300">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    checked={categoria === CATEGORIA.NORMAL}
+                    onChange={() => setCategoria(CATEGORIA.NORMAL)}
+                  />
+                  Normal
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    checked={categoria === CATEGORIA.BLACK}
+                    onChange={() => setCategoria(CATEGORIA.BLACK)}
+                  />
+                  Black
+                </label>
+              </div>
+
+              {categoria === CATEGORIA.BLACK && (
+                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                  Veículo até 3 anos, sedan médio ou SUV. Preço mais alto, só disponível como corrida
+                  avulsa (sem pacote ou benefício de plano).
+                </p>
+              )}
+            </fieldset>
+
+            <fieldset className="rounded-xl border border-gray-200 p-4 dark:border-gray-600">
               <legend className="px-1 text-sm font-medium text-gray-700 dark:text-gray-300">Forma de pagamento</legend>
 
               <div className="flex gap-4 text-sm text-gray-700 dark:text-gray-300">
@@ -165,21 +207,22 @@ export default function PedirCorridaPage() {
                     </span>
                   )}
                 </label>
-                <label className="flex items-center gap-2">
+                <label className={`flex items-center gap-2 ${categoria === CATEGORIA.BLACK ? 'opacity-60' : ''}`}>
                   <input
                     type="radio"
                     checked={tipoConsumo === TIPO_CONSUMO.PACOTE}
+                    disabled={categoria === CATEGORIA.BLACK}
                     onChange={() => setTipoConsumo(TIPO_CONSUMO.PACOTE)}
                   />
                   Usar pacote de corridas
                 </label>
 
                 {corBeneficio && (
-                  <label className={`flex items-center gap-2 ${!beneficio.disponivelParaUso ? 'opacity-60' : ''}`}>
+                  <label className={`flex items-center gap-2 ${!beneficio.disponivelParaUso || categoria === CATEGORIA.BLACK ? 'opacity-60' : ''}`}>
                     <input
                       type="radio"
                       checked={tipoConsumo === TIPO_CONSUMO.BENEFICIO}
-                      disabled={!beneficio.disponivelParaUso}
+                      disabled={!beneficio.disponivelParaUso || categoria === CATEGORIA.BLACK}
                       onChange={() => setTipoConsumo(TIPO_CONSUMO.BENEFICIO)}
                     />
                     Corrida {corBeneficio.nome.toLowerCase()} grátis do plano

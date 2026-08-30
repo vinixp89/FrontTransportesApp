@@ -47,11 +47,18 @@ export default function RideConfirmCard({
       style={{ borderLeft: `4px solid ${faixa.hex}` }}
     >
       <div className="flex items-center justify-between px-5 pt-5">
-        <span
-          className={`rounded-md px-2.5 py-1 text-xs font-bold uppercase tracking-wide ${faixa.badge} ${faixa.texto}`}
-        >
-          {faixa.nome}
-        </span>
+        <div className="flex items-center gap-2">
+          <span
+            className={`rounded-md px-2.5 py-1 text-xs font-bold uppercase tracking-wide ${faixa.badge} ${faixa.texto}`}
+          >
+            {faixa.nome}
+          </span>
+          {estimativa.categoria === 1 && (
+            <span className="rounded-md bg-gray-900 px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-white dark:bg-white dark:text-gray-900">
+              Black
+            </span>
+          )}
+        </div>
         <span className={`text-xs ${cores.subtexto}`}>
           {modo === 'confirmado' ? 'Solicitada' : 'Confira antes de confirmar'}
         </span>
