@@ -91,6 +91,7 @@ export default function AdminCorridasPage() {
                   <th className="px-4 py-3 font-medium">Motorista</th>
                   <th className="px-4 py-3 font-medium">Trajeto</th>
                   <th className="px-4 py-3 font-medium">Faixa</th>
+                  <th className="px-4 py-3 font-medium">Categoria</th>
                   <th className="px-4 py-3 font-medium">Valor</th>
                   <th className="px-4 py-3 font-medium">Status</th>
                 </tr>
@@ -128,6 +129,15 @@ export default function AdminCorridasPage() {
                           <span className={`h-2 w-2 rounded-full ${faixa.badge}`} />
                           {faixa.nome}
                         </span>
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3">
+                        {c.categoria === 1 ? (
+                          <span className="inline-block rounded-full bg-gray-900 px-2 py-0.5 text-xs font-medium text-white dark:bg-white dark:text-gray-900">
+                            Black
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-400 dark:text-gray-500">Normal</span>
+                        )}
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 font-medium text-gray-800 dark:text-gray-100">
                         {formatarPreco(c.valorReferencia)}
