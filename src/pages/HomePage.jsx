@@ -62,6 +62,18 @@ export default function HomePage() {
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {usuario.roles.includes('Admin') && (
+              <Link
+                to="/admin/corridas"
+                className="rounded-2xl bg-gray-800 p-6 text-white shadow-lg transition hover:bg-gray-900"
+              >
+                <h3 className="text-lg font-semibold">Painel Admin</h3>
+                <p className="mt-1 text-sm text-gray-300">
+                  Veja o histórico de todas as corridas do sistema.
+                </p>
+              </Link>
+            )}
+
             {usuario.roles.includes('Cliente') ? (
               <>
                 <Link
@@ -95,12 +107,14 @@ export default function HomePage() {
                 </Link>
               </>
             ) : (
-              <div className="rounded-2xl bg-white p-6 text-gray-500 shadow dark:bg-gray-800 dark:text-gray-400">
-                <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300">Pedir corrida</h3>
-                <p className="mt-1 text-sm">
-                  Disponível apenas para contas com perfil Cliente.
-                </p>
-              </div>
+              !usuario.roles.includes('Admin') && (
+                <div className="rounded-2xl bg-white p-6 text-gray-500 shadow dark:bg-gray-800 dark:text-gray-400">
+                  <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300">Pedir corrida</h3>
+                  <p className="mt-1 text-sm">
+                    Disponível apenas para contas com perfil Cliente.
+                  </p>
+                </div>
+              )
             )}
           </div>
         )}

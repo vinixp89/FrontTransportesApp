@@ -14,6 +14,7 @@ import PlanosPage from './pages/PlanosPage'
 import PagamentoRetornoPage from './pages/PagamentoRetornoPage'
 import ExtratoCorridasPage from './pages/ExtratoCorridasPage'
 import CorridasMotoristaPage from './pages/CorridasMotoristaPage'
+import AdminCorridasPage from './pages/AdminCorridasPage'
 
 function App() {
   return (
@@ -107,6 +108,14 @@ function App() {
               element={
                 <ProtectedRoute role="Motorista">
                   <CorridasMotoristaPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/corridas"
+              element={
+                <ProtectedRoute role="Admin">
+                  <AdminCorridasPage />
                 </ProtectedRoute>
               }
             />
