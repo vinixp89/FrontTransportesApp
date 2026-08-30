@@ -59,6 +59,16 @@ export default function HomePage() {
                 Extrato de corridas
               </span>
             </Link>
+
+            <Link
+              to="/motorista/black"
+              className="flex h-32 w-32 flex-col items-center justify-center gap-1.5 rounded-2xl bg-gray-900 p-3 text-center shadow-lg transition hover:bg-gray-800"
+            >
+              <span className="text-2xl">⭐</span>
+              <span className="text-sm font-semibold text-white">
+                Categoria Black
+              </span>
+            </Link>
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
