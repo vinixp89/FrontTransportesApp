@@ -80,9 +80,9 @@ export default function RideMap({ origem, destino, corHex, motoristaPos = null }
       <MapContainer
         center={origemLatLng}
         zoom={13}
-        scrollWheelZoom={false}
-        dragging={false}
-        zoomControl={false}
+        scrollWheelZoom={true}
+        dragging={true}
+        zoomControl={true}
         attributionControl={false}
         className="h-full w-full"
       >
