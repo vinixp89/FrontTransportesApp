@@ -3,10 +3,11 @@ import { MapContainer, TileLayer, CircleMarker, Polyline, useMap } from 'react-l
 import 'leaflet/dist/leaflet.css'
 import { useTheme } from '../context/ThemeContext'
 
-const TILES = {
-  light: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-  dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-}
+// Tiles do CARTO (basemaps.cartocdn.com) pararam de funcionar sem chave de API — passaram a exibir
+// um watermark "API key required" por cima do mapa. OpenStreetMap continua livre de chave; não tem
+// variante escura pronta, então o tema escuro aplica um filtro CSS nos tiles (ver .map-tiles-dark
+// em index.css) em vez de trocar de servidor de tiles.
+const TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
 
 // Ajusta o zoom/centro do mapa pra sempre enquadrar a rota inteira, com uma margem.
 function AjustarEnquadramento({ pontos }) {
@@ -57,7 +58,7 @@ function useTrajetoRodovia(origem, destino) {
   return pontos
 }
 
-// Mapa (Leaflet + OpenStreetMap/CARTO, sem chave de API) mostrando origem, destino e o trajeto
+// Mapa (Leaflet + OpenStreetMap, sem chave de API) mostrando origem, destino e o trajeto
 // entre eles seguindo as ruas (via OSRM). Se o trajeto real não carregar a tempo, mostra uma linha
 // reta entre os dois pontos como alternativa, em vez de deixar o mapa vazio.
 //
@@ -85,7 +86,7 @@ export default function RideMap({ origem, destino, corHex, motoristaPos = null }
         attributionControl={false}
         className="h-full w-full"
       >
-        <TileLayer url={TILES[tema]} />
+        <TileLayer url={TILE_URL} className={tema === 'dark' ? 'map-tiles-dark' : undefined} />
         <CircleMarker center={origemLatLng} radius={7} pathOptions={{ color: '#38bdf8', fillColor: '#38bdf8', fillOpacity: 1 }} />
         <CircleMarker center={destinoLatLng} radius={7} pathOptions={{ color: corHex, fillColor: corHex, fillOpacity: 1 }} />
         {motoristaPos && (

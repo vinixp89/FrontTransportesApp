@@ -38,6 +38,12 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
+/* Escurece os tiles do OpenStreetMap (RideMap.jsx) no tema escuro — o OSM só tem tiles claros
+   gratuitos, sem chave de API, então em vez de trocar de servidor a gente inverte as cores. */
+.map-tiles-dark {
+  filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9);
+}
+
 .dark body {
   /* Cinza escuro neutro (mesma família do gray-800 usado nos cards) em vez do azul-marinho
      anterior — combina melhor com os cards e fica mais suave que um preto puro. */
