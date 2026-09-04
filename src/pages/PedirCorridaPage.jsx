@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import api, { extrairMensagemErro } from '../api/client'
 import EnderecoFields, { enderecoVazio } from '../components/EnderecoFields'
 import RideConfirmCard from '../components/RideConfirmCard'
-import { obterFaixa, formatarPreco } from '../constants/faixas'
+import { obterFaixa } from '../constants/faixas'
 import ThemeToggleButton from '../components/ThemeToggleButton'
 import AppNavbar from '../components/AppNavbar'
 
@@ -24,7 +24,6 @@ export default function PedirCorridaPage() {
   const [pacotes, setPacotes] = useState([])
   const [pacoteCorridasId, setPacoteCorridasId] = useState('')
   const [beneficio, setBeneficio] = useState(null)
-  const [carteira, setCarteira] = useState(null)
 
   const [estimando, setEstimando] = useState(false)
   const [confirmando, setConfirmando] = useState(false)
@@ -59,16 +58,6 @@ export default function PedirCorridaPage() {
       .catch(() => setBeneficio(null))
   }, [])
 
-  // Saldo da carteira — só pra mostrar quanto tem disponível junto da opção "Corrida avulsa" (ela
-  // debita automaticamente desse saldo, ver CorridaService.CriarAsync). Falha em silêncio: se não
-  // carregar, o formulário continua funcionando normalmente, só sem mostrar o saldo.
-  useEffect(() => {
-    api
-      .get('/Carteiras/minha-carteira')
-      .then(({ data }) => setCarteira(data))
-      .catch(() => setCarteira(null))
-  }, [])
-
   const pacotesDisponiveis = pacotes.filter((p) => p.quantidadeRestante > 0)
   const pacoteSelecionado = pacotesDisponiveis.find((p) => p.id === pacoteCorridasId)
   const corBeneficio = beneficio?.temBeneficio ? obterFaixa(beneficio.corBeneficio) : null
@@ -85,13 +74,6 @@ export default function PedirCorridaPage() {
   const erroFaixaBeneficio =
     estimativa && tipoConsumo === TIPO_CONSUMO.BENEFICIO && corBeneficio && corBeneficio.valor !== estimativa.faixa
       ? `Sua corrida grátis vale só pra faixa ${corBeneficio.nome}, mas essa corrida caiu na faixa ${obterFaixa(estimativa.faixa).nome}. Volte e escolha outra forma de pagamento.`
-      : ''
-
-  // Corrida avulsa debita da carteira na hora de confirmar (ver CorridaService.CriarAsync) — avisa
-  // aqui se o saldo não é suficiente, em vez de deixar o cliente descobrir só depois de tentar.
-  const erroSaldoAvulsa =
-    estimativa && tipoConsumo === TIPO_CONSUMO.AVULSA && carteira && carteira.saldo < estimativa.valorReferencia
-      ? `Saldo insuficiente na carteira (você tem ${formatarPreco(carteira.saldo)}). Recarregue antes de confirmar, ou escolha outra forma de pagamento.`
       : ''
 
   const origemResolvida = Boolean(origem.logradouro)
@@ -131,6 +113,15 @@ export default function PedirCorridaPage() {
     setConfirmando(true)
 
     try {
+      // Corrida avulsa não debita mais de um saldo pré-carregado — abre o checkout do Mercado Pago
+      // pelo valor exato dela, e a corrida só é liberada de verdade quando o pagamento confirmar
+      // (ver PagamentoService no backend). O retorno do checkout volta pra /pagamentos/retorno.
+      if (tipoConsumo === TIPO_CONSUMO.AVULSA) {
+        const { data } = await api.post('/Corridas/avulsa', { origem, destino, tipoConsumo, pacoteCorridasId: null, categoria })
+        window.location.href = data.checkoutUrl
+        return
+      }
+
       const { data } = await api.post('/Corridas', {
         origem,
         destino,
@@ -200,12 +191,7 @@ export default function PedirCorridaPage() {
                     checked={tipoConsumo === TIPO_CONSUMO.AVULSA}
                     onChange={() => setTipoConsumo(TIPO_CONSUMO.AVULSA)}
                   />
-                  Corrida avulsa
-                  {carteira && (
-                    <span className="text-xs text-gray-400 dark:text-gray-500">
-                      (saldo: {formatarPreco(carteira.saldo)})
-                    </span>
-                  )}
+                  Corrida avulsa (pagar agora via Mercado Pago)
                 </label>
                 <label className={`flex items-center gap-2 ${categoria === CATEGORIA.EXECUTIVO ? 'opacity-60' : ''}`}>
                   <input
@@ -291,8 +277,8 @@ export default function PedirCorridaPage() {
             onConfirmar={handleConfirmar}
             onCancelar={() => setEtapa('form')}
             confirmando={confirmando}
-            erro={erro || erroFaixaPacote || erroFaixaBeneficio || erroSaldoAvulsa}
-            bloqueado={Boolean(erroFaixaPacote || erroFaixaBeneficio || erroSaldoAvulsa)}
+            erro={erro || erroFaixaPacote || erroFaixaBeneficio}
+            bloqueado={Boolean(erroFaixaPacote || erroFaixaBeneficio)}
             gratisPlano={tipoConsumo === TIPO_CONSUMO.BENEFICIO}
           />
         )}

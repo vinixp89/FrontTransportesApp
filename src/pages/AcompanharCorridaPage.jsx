@@ -109,7 +109,7 @@ export default function AcompanharCorridaPage() {
 
   const faixa = obterFaixa(corrida.faixaContratada)
   const status = obterStatusLabel(corrida.status)
-  const podeCancelar = corrida.status === 0 || corrida.status === 1
+  const podeCancelar = corrida.status === 0 || corrida.status === 1 || corrida.status === 6
   const motoristaPos = motorista && motorista.latitude != null && motorista.longitude != null
     ? [motorista.latitude, motorista.longitude]
     : null
