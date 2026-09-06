@@ -148,10 +148,10 @@ export default function PedirCorridaPage() {
       const { data } = await api.post('/Corridas/avulsa-pix', { origem, destino, tipoConsumo, pacoteCorridasId: null, categoria })
       navigate('/pagamento-pix', {
         state: {
-          corridaId: data.corridaId,
           pagamentoGatewayId: data.pagamentoGatewayId,
           qrCodeCopiaCola: data.qrCodeCopiaCola,
           qrCodeBase64: data.qrCodeBase64,
+          aoAprovar: { tipo: 'corrida', corridaId: data.corridaId },
         },
       })
     } catch (error) {

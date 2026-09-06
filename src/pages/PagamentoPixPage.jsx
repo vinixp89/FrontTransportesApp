@@ -8,13 +8,17 @@ import { STATUS_PAGAMENTO } from '../constants/planos'
 const INTERVALO_MS = 4000
 
 // Tela do QR Code Pix (gerado direto via Checkout API do Mercado Pago — ver
-// CorridaService.IniciarCorridaAvulsaPixAsync no backend, mesmo padrão da tela equivalente do app
-// mobile). Os dados do QR Code vêm via location.state (não dá URL) porque o "copia e cola" e a
-// imagem base64 são grandes demais/sensíveis demais pra ficar na barra de endereço.
+// CorridaService.IniciarCorridaAvulsaPixAsync/PacoteCorridasService.IniciarCompraPixAsync no
+// backend, mesmo padrão da tela equivalente do app mobile). Os dados do QR Code vêm via
+// location.state (não dá URL) porque o "copia e cola" e a imagem base64 são grandes demais/
+// sensíveis demais pra ficar na barra de endereço. `aoAprovar` diz pra onde ir quando o pagamento
+// aprovar (ou o cliente desistir), já que essa tela serve tanto pra corrida avulsa quanto pra
+// compra de pacote de corridas.
 export default function PagamentoPixPage() {
   const location = useLocation()
   const navigate = useNavigate()
   const dados = location.state
+  const telaDesistir = dados?.aoAprovar?.tipo === 'corrida' ? '/pedir-corrida' : '/pacotes'
 
   const [status, setStatus] = useState(STATUS_PAGAMENTO.PENDENTE)
   const [copiado, setCopiado] = useState(false)
@@ -29,7 +33,11 @@ export default function PagamentoPixPage() {
 
       if (data.status === STATUS_PAGAMENTO.APROVADO) {
         if (intervaloRef.current) clearInterval(intervaloRef.current)
-        navigate(`/corrida/${dados.corridaId}`, { replace: true })
+        if (dados.aoAprovar.tipo === 'corrida') {
+          navigate(`/corrida/${dados.aoAprovar.corridaId}`, { replace: true })
+        } else {
+          navigate('/pacotes', { replace: true })
+        }
       } else if (data.status === STATUS_PAGAMENTO.RECUSADO || data.status === STATUS_PAGAMENTO.CANCELADO) {
         if (intervaloRef.current) clearInterval(intervaloRef.current)
       }
@@ -128,7 +136,7 @@ export default function PagamentoPixPage() {
 
           {finalizado && (
             <Link
-              to="/pedir-corrida"
+              to={telaDesistir}
               className="mt-5 inline-block w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-900"
             >
               Voltar e tentar de novo

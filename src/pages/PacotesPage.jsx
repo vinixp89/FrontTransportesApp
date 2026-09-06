@@ -12,7 +12,9 @@ export default function PacotesPage() {
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
   const [comprando, setComprando] = useState('') // "faixa-quantidade" do item em compra, pra desabilitar só aquele botão
-  const [mensagemSucesso, setMensagemSucesso] = useState('')
+  // Item que o cliente clicou, esperando ele escolher Pix ou cartão/boleto — "" quando nenhum
+  // está selecionado.
+  const [selecionado, setSelecionado] = useState('')
 
   useEffect(() => {
     api
@@ -22,19 +24,40 @@ export default function PacotesPage() {
       .finally(() => setCarregando(false))
   }, [])
 
-  async function handleComprar(faixaValor, quantidade) {
+  async function handleComprarPix(faixaValor, quantidade) {
     const chave = `${faixaValor}-${quantidade}`
     setComprando(chave)
     setErro('')
-    setMensagemSucesso('')
 
     try {
-      await api.post('/PacotesCorridas', { faixa: faixaValor, quantidade })
-      const faixa = obterFaixa(faixaValor)
-      setMensagemSucesso(`Pacote de ${quantidade} corridas ${faixa.nome} comprado com sucesso!`)
+      const { data } = await api.post('/PacotesCorridas/comprar-pix', { faixa: faixaValor, quantidade })
+      setSelecionado('')
+      navigate('/pagamento-pix', {
+        state: {
+          pagamentoGatewayId: data.pagamentoGatewayId,
+          qrCodeCopiaCola: data.qrCodeCopiaCola,
+          qrCodeBase64: data.qrCodeBase64,
+          aoAprovar: { tipo: 'pacote' },
+        },
+      })
     } catch (error) {
       setErro(extrairMensagemErro(error))
     } finally {
+      setComprando('')
+    }
+  }
+
+  async function handleComprarCartaoBoleto(faixaValor, quantidade) {
+    const chave = `${faixaValor}-${quantidade}`
+    setComprando(chave)
+    setErro('')
+
+    try {
+      const { data } = await api.post('/PacotesCorridas/comprar', { faixa: faixaValor, quantidade })
+      setSelecionado('')
+      window.location.href = data.checkoutUrl
+    } catch (error) {
+      setErro(extrairMensagemErro(error))
       setComprando('')
     }
   }
@@ -51,19 +74,6 @@ export default function PacotesPage() {
           mesmo da corrida avulsa multiplicado pela quantidade — a vantagem é já deixar pago e
           pronto pra usar.
         </p>
-
-        {mensagemSucesso && (
-          <div className="mb-4 flex items-center justify-between rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700 dark:bg-green-950 dark:text-green-300">
-            <span>{mensagemSucesso}</span>
-            <button
-              type="button"
-              onClick={() => navigate('/saldo-corridas')}
-              className="ml-3 shrink-0 font-medium underline"
-            >
-              Ver meus pacotes
-            </button>
-          </div>
-        )}
 
         {erro && <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">{erro}</p>}
 
@@ -92,8 +102,10 @@ export default function PacotesPage() {
                         key={chave}
                         type="button"
                         disabled={comprando === chave}
-                        onClick={() => handleComprar(item.faixa, tamanho.quantidade)}
-                        className="flex flex-col items-center gap-1 rounded-xl border border-black/10 bg-white/25 px-3 py-3 text-center backdrop-blur-sm transition hover:bg-white/40 disabled:opacity-50"
+                        onClick={() => setSelecionado((atual) => (atual === chave ? '' : chave))}
+                        className={`flex flex-col items-center gap-1 rounded-xl border bg-white/25 px-3 py-3 text-center backdrop-blur-sm transition hover:bg-white/40 disabled:opacity-50 ${
+                          selecionado === chave ? 'border-2 border-white' : 'border-black/10'
+                        }`}
                       >
                         <span className="text-sm font-semibold">
                           {tamanho.quantidade} corridas
@@ -105,6 +117,31 @@ export default function PacotesPage() {
                     )
                   })}
                 </div>
+
+                {item.tamanhos.some((t) => `${item.faixa}-${t.quantidade}` === selecionado) && (
+                  <div className="mt-3 flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const [, quantidade] = selecionado.split('-')
+                        handleComprarPix(item.faixa, Number(quantidade))
+                      }}
+                      className="flex-1 rounded-lg bg-white px-3 py-2.5 text-sm font-semibold text-green-700 transition hover:bg-white/90"
+                    >
+                      Pagar com Pix
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const [, quantidade] = selecionado.split('-')
+                        handleComprarCartaoBoleto(item.faixa, Number(quantidade))
+                      }}
+                      className="flex-1 rounded-lg border border-white/60 bg-white/30 px-3 py-2.5 text-sm font-semibold transition hover:bg-white/40"
+                    >
+                      Cartão / Boleto
+                    </button>
+                  </div>
+                )}
               </div>
             )
           })}
