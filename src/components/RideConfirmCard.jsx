@@ -14,6 +14,12 @@ export default function RideConfirmCard({
   erro,
   bloqueado = false,
   gratisPlano = false,
+  // Corrida avulsa tem 2 formas de pagar (ver PedirCorridaPage) — onConfirmar continua sendo
+  // cartão/boleto (Checkout Pro, com redirecionamento), onConfirmarPix é o Pix direto (QR Code na
+  // hora, sem sair da página).
+  avulsa = false,
+  onConfirmarPix,
+  confirmandoPix = false,
 }) {
   const { tema } = useTheme()
   const escuro = tema === 'dark'
@@ -115,7 +121,36 @@ export default function RideConfirmCard({
       )}
 
       <div className="mt-5 px-5 pb-5">
-        {modo === 'confirmando' ? (
+        {modo === 'confirmando' && avulsa ? (
+          <div className="space-y-2.5">
+            <button
+              type="button"
+              onClick={onConfirmarPix}
+              disabled={confirmando || confirmandoPix || bloqueado}
+              className="w-full rounded-lg py-2.5 text-sm font-semibold text-white transition disabled:opacity-60"
+              style={{ backgroundColor: faixa.hex }}
+            >
+              {confirmandoPix ? 'Gerando Pix...' : 'Pagar com Pix'}
+            </button>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={onCancelar}
+                className={`flex-1 rounded-lg border py-2.5 text-sm font-medium ${cores.botaoVoltar}`}
+              >
+                Voltar
+              </button>
+              <button
+                type="button"
+                onClick={onConfirmar}
+                disabled={confirmando || confirmandoPix || bloqueado}
+                className={`flex-1 rounded-lg border py-2.5 text-sm font-medium disabled:opacity-60 ${cores.botaoVoltar}`}
+              >
+                {confirmando ? 'Confirmando...' : 'Cartão / Boleto'}
+              </button>
+            </div>
+          </div>
+        ) : modo === 'confirmando' ? (
           <div className="flex gap-3">
             <button
               type="button"

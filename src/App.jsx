@@ -12,6 +12,7 @@ import CarteiraPage from './pages/CarteiraPage'
 import ExtratoPage from './pages/ExtratoPage'
 import PlanosPage from './pages/PlanosPage'
 import PagamentoRetornoPage from './pages/PagamentoRetornoPage'
+import PagamentoPixPage from './pages/PagamentoPixPage'
 import ExtratoCorridasPage from './pages/ExtratoCorridasPage'
 import CorridasMotoristaPage from './pages/CorridasMotoristaPage'
 import AdminCorridasPage from './pages/AdminCorridasPage'
@@ -94,6 +95,14 @@ function App() {
               element={
                 <ProtectedRoute role="Cliente">
                   <PagamentoRetornoPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/pagamento-pix"
+              element={
+                <ProtectedRoute role="Cliente">
+                  <PagamentoPixPage />
                 </ProtectedRoute>
               }
             />

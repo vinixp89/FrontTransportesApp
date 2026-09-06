@@ -27,6 +27,7 @@ export default function PedirCorridaPage() {
 
   const [estimando, setEstimando] = useState(false)
   const [confirmando, setConfirmando] = useState(false)
+  const [confirmandoPix, setConfirmandoPix] = useState(false)
   const [erro, setErro] = useState('')
   const [estimativa, setEstimativa] = useState(null)
 
@@ -139,6 +140,26 @@ export default function PedirCorridaPage() {
     }
   }
 
+  async function handleConfirmarPix() {
+    setErro('')
+    setConfirmandoPix(true)
+
+    try {
+      const { data } = await api.post('/Corridas/avulsa-pix', { origem, destino, tipoConsumo, pacoteCorridasId: null, categoria })
+      navigate('/pagamento-pix', {
+        state: {
+          corridaId: data.corridaId,
+          pagamentoGatewayId: data.pagamentoGatewayId,
+          qrCodeCopiaCola: data.qrCodeCopiaCola,
+          qrCodeBase64: data.qrCodeBase64,
+        },
+      })
+    } catch (error) {
+      setErro(extrairMensagemErro(error))
+      setConfirmandoPix(false)
+    }
+  }
+
   return (
     <div className="min-h-screen pb-16">
       <AppNavbar titulo="Pedir corrida">
@@ -191,7 +212,7 @@ export default function PedirCorridaPage() {
                     checked={tipoConsumo === TIPO_CONSUMO.AVULSA}
                     onChange={() => setTipoConsumo(TIPO_CONSUMO.AVULSA)}
                   />
-                  Corrida avulsa (pagar agora via Mercado Pago)
+                  Corrida avulsa (pagar agora — Pix, cartão ou boleto)
                 </label>
                 <label className={`flex items-center gap-2 ${categoria === CATEGORIA.EXECUTIVO ? 'opacity-60' : ''}`}>
                   <input
@@ -280,6 +301,9 @@ export default function PedirCorridaPage() {
             erro={erro || erroFaixaPacote || erroFaixaBeneficio}
             bloqueado={Boolean(erroFaixaPacote || erroFaixaBeneficio)}
             gratisPlano={tipoConsumo === TIPO_CONSUMO.BENEFICIO}
+            avulsa={tipoConsumo === TIPO_CONSUMO.AVULSA}
+            onConfirmarPix={handleConfirmarPix}
+            confirmandoPix={confirmandoPix}
           />
         )}
       </main>
