@@ -104,6 +104,8 @@ const SECOES = [
     ],
   },
   {
+    // Âncora usada como "URL para exclusão de contas" no Data Safety do Google Play.
+    id: 'exclusao-conta',
     titulo: '13. Como excluir sua conta',
     paragrafos: ['Para excluir sua conta nos aplicativos Vai na Boa ou Vai na Boa Motorista, siga os passos abaixo:'],
     itens: [
@@ -152,7 +154,7 @@ export default function PoliticaPrivacidadePage() {
         </div>
 
         {SECOES.map((secao) => (
-          <section key={secao.titulo} className="mt-8">
+          <section key={secao.titulo} id={secao.id} className="mt-8 scroll-mt-20">
             <h2 className="mb-2 text-base font-bold text-gray-900 dark:text-white">{secao.titulo}</h2>
             {secao.paragrafos.map((paragrafo) => (
               <p key={paragrafo} className="mb-2 text-sm leading-relaxed text-gray-600 dark:text-gray-300">
