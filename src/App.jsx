@@ -18,6 +18,7 @@ import CorridasMotoristaPage from './pages/CorridasMotoristaPage'
 import AdminCorridasPage from './pages/AdminCorridasPage'
 import MotoristaExecutivoPage from './pages/MotoristaExecutivoPage'
 import DoarCorridaPage from './pages/DoarCorridaPage'
+import PoliticaPrivacidadePage from './pages/PoliticaPrivacidadePage'
 
 function App() {
   return (
@@ -26,6 +27,10 @@ function App() {
         <AuthProvider>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            {/* Pública de propósito — é a URL cadastrada como "Política de privacidade" nos apps
+                Cliente e Motorista no Google Play Console, além de ser mostrada nativa dentro dos
+                apps (ver PoliticaPrivacidadeScreen.tsx nos dois repositórios mobile). */}
+            <Route path="/privacidade" element={<PoliticaPrivacidadePage />} />
             <Route
               path="/"
               element={
