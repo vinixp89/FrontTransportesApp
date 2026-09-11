@@ -7,9 +7,10 @@ import AppNavbar from '../components/AppNavbar'
 
 const ANO_ATUAL = new Date().getFullYear()
 
-// Assinatura da categoria Executivo do motorista — veículo até 3 anos (sedan médio ou SUV), R$99,90,
-// pagamento único via Mercado Pago (mesmo fluxo do Planos do cliente, ver PlanosPage). Só depois de
-// confirmada é que o motorista passa a ver/aceitar corridas Executivo (ver CorridaService no backend).
+// Assinatura da categoria Executivo do motorista — veículo até 3 anos (sedan médio ou SUV),
+// R$99,90/mês (1º mês grátis), cobrança recorrente de verdade via Mercado Pago (Preapproval,
+// diferente do pagamento único usado no resto do sistema, ver PlanosPage). Só depois de confirmada é
+// que o motorista passa a ver/aceitar corridas Executivo (ver CorridaService no backend).
 export default function MotoristaExecutivoPage() {
   const [assinatura, setAssinatura] = useState(null)
   const [anoVeiculo, setAnoVeiculo] = useState(String(ANO_ATUAL))
@@ -81,6 +82,7 @@ export default function MotoristaExecutivoPage() {
         <div className="overflow-hidden rounded-2xl bg-gray-900 p-6 text-white shadow-xl">
           <h2 className="text-lg font-bold uppercase tracking-wide">Executivo</h2>
           <p className="mt-1 text-3xl font-bold">{formatarPreco(99.9)}<span className="text-sm font-normal text-gray-400">/mês</span></p>
+          <p className="mt-2 text-xs font-bold text-green-400">🎉 1º mês grátis — cobrança só a partir do 2º mês</p>
           <ul className="mt-4 space-y-1.5 text-sm text-gray-300">
             <li>• Corridas com valor mais alto por faixa</li>
             <li>• Veículo com até 3 anos de fabricação</li>
