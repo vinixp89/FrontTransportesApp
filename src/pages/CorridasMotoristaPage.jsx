@@ -4,6 +4,7 @@ import { obterFaixa, formatarPreco } from '../constants/faixas'
 import { obterStatusLabel } from '../constants/statusCorrida'
 import ThemeToggleButton from '../components/ThemeToggleButton'
 import AppNavbar from '../components/AppNavbar'
+import AvaliacaoForm, { TIPO_USUARIO } from '../components/AvaliacaoForm'
 
 const INTERVALO_MS = 5000
 
@@ -13,6 +14,10 @@ const INTERVALO_MS = 5000
 // uma corrida deixa o motorista EmCorrida no backend (não dá pra aceitar outra até finalizar).
 export default function CorridasMotoristaPage() {
   const [corridaAtual, setCorridaAtual] = useState(null)
+  // Corrida recém-finalizada (pra mostrar a tela de avaliação) — separada de corridaAtual porque
+  // GET /Corridas/atual nunca devolve uma corrida Finalizada, então o polling normal sobrescreveria
+  // isso com null antes do motorista conseguir avaliar o cliente.
+  const [finalizada, setFinalizada] = useState(null)
   const [pendentes, setPendentes] = useState([])
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
@@ -24,6 +29,8 @@ export default function CorridasMotoristaPage() {
   const intervaloRef = useRef(null)
 
   const buscar = useCallback(async () => {
+    if (finalizada) return
+
     try {
       const { data: atual } = await api.get('/Corridas/atual')
       setCorridaAtual(atual)
@@ -37,7 +44,7 @@ export default function CorridasMotoristaPage() {
     } finally {
       setCarregando(false)
     }
-  }, [])
+  }, [finalizada])
 
   useEffect(() => {
     buscar()
@@ -92,16 +99,20 @@ export default function CorridasMotoristaPage() {
     setErro('')
 
     try {
-      await api.patch(`/Corridas/${corridaAtual.id}/finalizar`, {
+      const { data } = await api.patch(`/Corridas/${corridaAtual.id}/finalizar`, {
         distanciaReal: Number(distanciaReal),
       })
+      setFinalizada(data.corrida)
       setCorridaAtual(null)
-      buscar()
     } catch (error) {
       setErro(extrairMensagemErro(error))
     } finally {
       setFinalizando(false)
     }
+  }
+
+  function handleConcluir() {
+    setFinalizada(null)
   }
 
   return (
@@ -119,7 +130,32 @@ export default function CorridasMotoristaPage() {
 
         {carregando && <p className="text-sm text-gray-500 dark:text-gray-400">Carregando...</p>}
 
-        {!carregando && corridaAtual && (
+        {!carregando && finalizada && (
+          <div className="overflow-hidden rounded-2xl bg-white p-5 shadow-xl dark:bg-gray-800">
+            <p className="text-center text-sm font-medium text-gray-700 dark:text-gray-200">
+              Corrida finalizada! {formatarPreco(finalizada.valorReferencia)}
+            </p>
+
+            <div className="mt-4">
+              <AvaliacaoForm
+                corridaId={finalizada.id}
+                autorTipoAtual={TIPO_USUARIO.MOTORISTA}
+                titulo="Como foi o cliente dessa corrida?"
+                corDestaque="#9333ea"
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={handleConcluir}
+              className="mt-4 w-full rounded-lg bg-purple-600 py-2.5 text-sm font-semibold text-white transition hover:bg-purple-700"
+            >
+              Concluir
+            </button>
+          </div>
+        )}
+
+        {!carregando && !finalizada && corridaAtual && (
           <CorridaAtualPainel
             corrida={corridaAtual}
             iniciando={iniciando}
@@ -133,7 +169,7 @@ export default function CorridasMotoristaPage() {
           />
         )}
 
-        {!carregando && !corridaAtual && (
+        {!carregando && !finalizada && !corridaAtual && (
           <>
             {pendentes.length === 0 ? (
               <div className="rounded-2xl bg-white p-6 text-center shadow dark:bg-gray-800">

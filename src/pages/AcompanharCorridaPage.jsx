@@ -6,6 +6,7 @@ import { obterFaixa, formatarPreco } from '../constants/faixas'
 import { obterStatusLabel } from '../constants/statusCorrida'
 import ThemeToggleButton from '../components/ThemeToggleButton'
 import AppNavbar from '../components/AppNavbar'
+import AvaliacaoForm, { TIPO_USUARIO } from '../components/AvaliacaoForm'
 
 // Status em que ainda faz sentido continuar consultando (StatusCorrida, ver statusCorrida.js) —
 // Finalizada (4) e Cancelada (5) são estados finais, aí para de perguntar pro backend.
@@ -182,6 +183,17 @@ export default function AcompanharCorridaPage() {
 
           {erro && (
             <div className="mx-5 mt-4 rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-600">{erro}</div>
+          )}
+
+          {corrida.status === 4 && (
+            <div className="mx-5 mt-4">
+              <AvaliacaoForm
+                corridaId={corrida.id}
+                autorTipoAtual={TIPO_USUARIO.CLIENTE}
+                titulo="Como foi sua viagem com o motorista?"
+                corDestaque={faixa.hex}
+              />
+            </div>
           )}
 
           <div className="mt-5 flex gap-3 px-5 pb-5">
