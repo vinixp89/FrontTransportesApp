@@ -29,7 +29,12 @@ export default function MotoristaExecutivoPage() {
   }, [])
 
   const ativa = assinatura?.status === STATUS_ASSINATURA.ATIVA
+  const aguardandoAprovacao = assinatura?.status === STATUS_ASSINATURA.AGUARDANDO_APROVACAO
+  // Só chega em PendentePagamento depois do Admin aprovar a placa/foto do carro (ver
+  // AdminExecutivoController) — é aí que a cobrança de verdade existe no Mercado Pago e checkoutUrl
+  // vem preenchida, pronta pro motorista continuar direto (sem passar de novo pela análise).
   const pendente = assinatura?.status === STATUS_ASSINATURA.PENDENTE_PAGAMENTO
+  const negada = assinatura?.status === STATUS_ASSINATURA.NEGADA_ADMIN
 
   async function handleAssinar(event) {
     event.preventDefault()
@@ -40,19 +45,29 @@ export default function MotoristaExecutivoPage() {
     try {
       const { data } = await api.post('/Motoristas/executivo/assinar', { anoVeiculo: Number(anoVeiculo) })
 
-      // O backend só devolve checkoutUrl quando tem pagamento pra fazer — se o motorista já tinha
-      // assinatura ativa, vem null e nada a pagar de novo (ver AssinaturaMotoristaExecutivoService).
+      // checkoutUrl só vem preenchida aqui se o motorista já tinha assinatura ativa (nada a pagar de
+      // novo) — toda solicitação nova nasce AguardandoAprovacao, sem cobrança ainda (ver
+      // AssinaturaMotoristaExecutivoService.AssinarAsync).
       if (data.checkoutUrl) {
         window.location.href = data.checkoutUrl
         return
       }
 
       setAssinatura(data.assinatura)
-      setMensagemSucesso('Assinatura Executivo confirmada!')
+      setMensagemSucesso('Solicitação enviada! Assim que for aprovada você conclui o pagamento por aqui.')
     } catch (error) {
       setErro(extrairMensagemErro(error))
     } finally {
       setProcessando(false)
+    }
+  }
+
+  // Diferente de handleAssinar: aqui a assinatura JÁ foi aprovada e já tem checkoutUrl pronta — não
+  // faz outra chamada de POST /assinar, porque isso cancelaria essa aprovação e criaria uma
+  // solicitação nova, obrigando o motorista a esperar a análise de novo.
+  function handleContinuarPagamento() {
+    if (assinatura?.checkoutUrl) {
+      window.location.href = assinatura.checkoutUrl
     }
   }
 
@@ -120,8 +135,54 @@ export default function MotoristaExecutivoPage() {
             </div>
           )}
 
-          {!carregando && !ativa && (
+          {!carregando && aguardandoAprovacao && (
+            <div className="flex flex-col gap-3">
+              <span className="rounded-lg border border-yellow-500 px-4 py-2 text-center text-sm font-medium text-yellow-700 dark:border-yellow-500 dark:text-yellow-400">
+                Solicitação em análise — vamos conferir a placa e o veículo antes de liberar o pagamento.
+              </span>
+              <button
+                type="button"
+                onClick={handleCancelar}
+                disabled={cancelando}
+                className="text-xs text-gray-400 hover:text-red-500 hover:underline disabled:opacity-50 dark:text-gray-500 dark:hover:text-red-400"
+              >
+                {cancelando ? 'Cancelando...' : 'Cancelar solicitação'}
+              </button>
+            </div>
+          )}
+
+          {!carregando && pendente && (
+            <div className="flex flex-col gap-3">
+              <p className="text-xs text-yellow-600 dark:text-yellow-400">
+                Solicitação aprovada! Falta só confirmar o pagamento pra ativar.
+              </p>
+              <button
+                type="button"
+                onClick={handleContinuarPagamento}
+                className="rounded-lg bg-gray-900 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
+              >
+                Continuar pagamento
+              </button>
+              <button
+                type="button"
+                onClick={handleCancelar}
+                disabled={cancelando}
+                className="text-xs text-gray-400 hover:text-red-500 hover:underline disabled:opacity-50 dark:text-gray-500 dark:hover:text-red-400"
+              >
+                {cancelando ? 'Cancelando...' : 'Cancelar'}
+              </button>
+            </div>
+          )}
+
+          {!carregando && !ativa && !aguardandoAprovacao && !pendente && (
             <form onSubmit={handleAssinar} className="flex flex-col gap-4">
+              {negada && (
+                <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700 dark:bg-red-950 dark:text-red-300">
+                  Sua solicitação anterior foi negada{assinatura?.motivoNegacao ? `: ${assinatura.motivoNegacao}` : '.'}{' '}
+                  Confira os dados do veículo e tente de novo.
+                </p>
+              )}
+
               <label className="block text-sm text-gray-700 dark:text-gray-300">
                 Ano de fabricação do veículo
                 <input
@@ -138,18 +199,12 @@ export default function MotoristaExecutivoPage() {
                 </span>
               </label>
 
-              {pendente && (
-                <p className="text-xs text-yellow-600 dark:text-yellow-400">
-                  Você tem um pagamento pendente — continue pra confirmar.
-                </p>
-              )}
-
               <button
                 type="submit"
                 disabled={processando}
                 className="rounded-lg bg-gray-900 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:opacity-60 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
               >
-                {processando ? 'Redirecionando...' : pendente ? 'Continuar pagamento' : 'Assinar Executivo'}
+                {processando ? 'Enviando...' : 'Solicitar Executivo'}
               </button>
             </form>
           )}

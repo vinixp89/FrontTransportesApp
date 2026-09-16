@@ -34,11 +34,16 @@ export function obterEstiloPlano(tipo) {
 // Espelha StatusAssinatura do backend (TransportesApp.Domain/Enums/Enums.cs) — os enums do backend
 // vêm sempre como número (sem JsonStringEnumConverter em lugar nenhum da API), então essas chaves
 // são a fonte de verdade de "o que cada número significa" no front.
+//
+// AGUARDANDO_APROVACAO e NEGADA_ADMIN são exclusivos da assinatura Executivo do motorista (ver
+// MotoristaExecutivoPage) — a AssinaturaPlano do Cliente (PlanosPage) nunca usa esses dois valores.
 export const STATUS_ASSINATURA = {
   PENDENTE_PAGAMENTO: 0,
   ATIVA: 1,
   PAGAMENTO_RECUSADO: 2,
   CANCELADA: 3,
+  AGUARDANDO_APROVACAO: 4,
+  NEGADA_ADMIN: 5,
 }
 
 // Espelha StatusPagamento do backend — usado só pela tela de retorno do pagamento (PagamentoRetornoPage).

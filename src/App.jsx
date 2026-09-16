@@ -16,6 +16,7 @@ import PagamentoPixPage from './pages/PagamentoPixPage'
 import ExtratoCorridasPage from './pages/ExtratoCorridasPage'
 import CorridasMotoristaPage from './pages/CorridasMotoristaPage'
 import AdminCorridasPage from './pages/AdminCorridasPage'
+import AdminExecutivoPage from './pages/AdminExecutivoPage'
 import MotoristaExecutivoPage from './pages/MotoristaExecutivoPage'
 import DoarCorridaPage from './pages/DoarCorridaPage'
 import PoliticaPrivacidadePage from './pages/PoliticaPrivacidadePage'
@@ -132,6 +133,14 @@ function App() {
               element={
                 <ProtectedRoute role="Admin">
                   <AdminCorridasPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/executivo"
+              element={
+                <ProtectedRoute role="Admin">
+                  <AdminExecutivoPage />
                 </ProtectedRoute>
               }
             />
