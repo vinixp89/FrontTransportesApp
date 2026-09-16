@@ -5,9 +5,13 @@ import { useTheme } from '../context/ThemeContext'
 // Cartão de confirmação/status da corrida — selo colorido por faixa, endereços, mapa e valor,
 // inspirado no layout que o motorista vê pra aceitar corridas (mesma linguagem visual, adaptada
 // aqui pra uma corrida só, do lado do cliente). Respeita o tema claro/escuro escolhido pelo usuário.
+const CATEGORIA = { NORMAL: 0, EXECUTIVO: 1 }
+
 export default function RideConfirmCard({
   estimativa,
   modo, // 'confirmando' | 'confirmado'
+  categoria = CATEGORIA.NORMAL,
+  onCategoriaChange,
   onConfirmar,
   onCancelar,
   confirmando,
@@ -26,6 +30,7 @@ export default function RideConfirmCard({
 
   const faixa = obterFaixa(estimativa.faixa)
   const duracao = formatarDuracao(estimativa.duracaoEstimadaMinutos)
+  const valorEscolhido = categoria === CATEGORIA.EXECUTIVO ? estimativa.valorReferenciaExecutivo : estimativa.valorReferenciaNormal
 
   const cores = escuro
     ? {
@@ -53,18 +58,11 @@ export default function RideConfirmCard({
       style={{ borderLeft: `4px solid ${faixa.hex}` }}
     >
       <div className="flex items-center justify-between px-5 pt-5">
-        <div className="flex items-center gap-2">
-          <span
-            className={`rounded-md px-2.5 py-1 text-xs font-bold uppercase tracking-wide ${faixa.badge} ${faixa.texto}`}
-          >
-            {faixa.nome}
-          </span>
-          {estimativa.categoria === 1 && (
-            <span className="rounded-md bg-gray-900 px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-white dark:bg-white dark:text-gray-900">
-              Executivo
-            </span>
-          )}
-        </div>
+        <span
+          className={`rounded-md px-2.5 py-1 text-xs font-bold uppercase tracking-wide ${faixa.badge} ${faixa.texto}`}
+        >
+          {faixa.nome}
+        </span>
         <span className={`text-xs ${cores.subtexto}`}>
           {modo === 'confirmado' ? 'Solicitada' : 'Confira antes de confirmar'}
         </span>
@@ -93,20 +91,58 @@ export default function RideConfirmCard({
         <RideMap origem={estimativa.origem} destino={estimativa.destino} corHex={faixa.hex} />
       </div>
 
-      <div className="mt-4 flex items-center justify-between px-5">
-        <div className={`text-sm ${cores.subtexto}`}>
-          {estimativa.distanciaEstimadaKm.toFixed(1)} km
-          {duracao ? ` · ${duracao}` : ''}
-        </div>
-        <div className="text-right">
-          <div className="text-lg font-bold" style={{ color: faixa.hex }}>
-            {gratisPlano ? 'Grátis' : formatarPreco(estimativa.valorReferencia)}
-          </div>
-          {gratisPlano && (
-            <div className={`text-xs ${cores.subtexto}`}>Benefício do plano</div>
-          )}
-        </div>
+      <div className={`mt-4 px-5 text-sm ${cores.subtexto}`}>
+        {estimativa.distanciaEstimadaKm.toFixed(1)} km
+        {duracao ? ` · ${duracao}` : ''}
       </div>
+
+      {modo === 'confirmando' && onCategoriaChange ? (
+        <div className="mt-3 grid grid-cols-2 gap-3 px-5">
+          <button
+            type="button"
+            onClick={() => onCategoriaChange(CATEGORIA.NORMAL)}
+            className={`rounded-xl border-2 p-3 text-left transition ${
+              categoria === CATEGORIA.NORMAL
+                ? 'border-current'
+                : `border-transparent ${escuro ? 'bg-gray-900' : 'bg-gray-50'}`
+            }`}
+            style={categoria === CATEGORIA.NORMAL ? { borderColor: faixa.hex } : undefined}
+          >
+            <div className={`text-xs font-semibold uppercase tracking-wide ${cores.subtexto}`}>Normal</div>
+            <div className="mt-0.5 text-lg font-bold" style={{ color: faixa.hex }}>
+              {gratisPlano ? 'Grátis' : formatarPreco(estimativa.valorReferenciaNormal)}
+            </div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onCategoriaChange(CATEGORIA.EXECUTIVO)}
+            className={`rounded-xl border-2 p-3 text-left transition ${
+              categoria === CATEGORIA.EXECUTIVO
+                ? 'border-current'
+                : `border-transparent ${escuro ? 'bg-gray-900' : 'bg-gray-50'}`
+            }`}
+            style={categoria === CATEGORIA.EXECUTIVO ? { borderColor: faixa.hex } : undefined}
+          >
+            <div className={`text-xs font-semibold uppercase tracking-wide ${cores.subtexto}`}>Executivo</div>
+            <div className="mt-0.5 text-lg font-bold" style={{ color: faixa.hex }}>
+              {formatarPreco(estimativa.valorReferenciaExecutivo)}
+            </div>
+          </button>
+        </div>
+      ) : (
+        <div className="mt-3 flex justify-end px-5">
+          <div className="text-lg font-bold" style={{ color: faixa.hex }}>
+            {gratisPlano ? 'Grátis' : formatarPreco(valorEscolhido)}
+          </div>
+        </div>
+      )}
+
+      {modo === 'confirmando' && categoria === CATEGORIA.EXECUTIVO && (
+        <p className={`mt-2 px-5 text-xs ${cores.subtexto}`}>
+          Veículo até 3 anos, sedan médio ou SUV — só disponível como corrida avulsa.
+        </p>
+      )}
 
       {estimativa.avisosEndereco && estimativa.avisosEndereco.length > 0 && (
         <div className="mx-5 mt-4 rounded-lg bg-yellow-500/10 px-3 py-2 text-xs text-yellow-600">

@@ -99,8 +99,11 @@ export default function PedirCorridaPage() {
     setEstimando(true)
 
     try {
-      const { data } = await api.post('/Corridas/estimar', { origem, destino, categoria })
+      // Sem categoria aqui — o backend devolve os dois valores (Normal e Executivo) de uma vez, pra
+      // tela de confirmação deixar o cliente comparar e escolher só depois de ver o preço.
+      const { data } = await api.post('/Corridas/estimar', { origem, destino })
       setEstimativa(data)
+      setCategoria(CATEGORIA.NORMAL)
       setEtapa('confirmando')
     } catch (error) {
       setErro(extrairMensagemErro(error))
@@ -173,36 +176,6 @@ export default function PedirCorridaPage() {
             <EnderecoFields titulo="Destino" valores={destino} onChange={setDestino} />
 
             <fieldset className="rounded-xl border border-gray-200 p-4 dark:border-gray-600">
-              <legend className="px-1 text-sm font-medium text-gray-700 dark:text-gray-300">Categoria</legend>
-
-              <div className="flex gap-4 text-sm text-gray-700 dark:text-gray-300">
-                <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    checked={categoria === CATEGORIA.NORMAL}
-                    onChange={() => setCategoria(CATEGORIA.NORMAL)}
-                  />
-                  Normal
-                </label>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    checked={categoria === CATEGORIA.EXECUTIVO}
-                    onChange={() => setCategoria(CATEGORIA.EXECUTIVO)}
-                  />
-                  Executivo
-                </label>
-              </div>
-
-              {categoria === CATEGORIA.EXECUTIVO && (
-                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                  Veículo até 3 anos, sedan médio ou SUV. Preço mais alto, só disponível como corrida
-                  avulsa (sem pacote ou benefício de plano).
-                </p>
-              )}
-            </fieldset>
-
-            <fieldset className="rounded-xl border border-gray-200 p-4 dark:border-gray-600">
               <legend className="px-1 text-sm font-medium text-gray-700 dark:text-gray-300">Forma de pagamento</legend>
 
               <div className="flex gap-4 text-sm text-gray-700 dark:text-gray-300">
@@ -214,28 +187,32 @@ export default function PedirCorridaPage() {
                   />
                   Corrida avulsa (pagar agora — Pix, cartão ou boleto)
                 </label>
-                <label className={`flex items-center gap-2 ${categoria === CATEGORIA.EXECUTIVO ? 'opacity-60' : ''}`}>
+                <label className="flex items-center gap-2">
                   <input
                     type="radio"
                     checked={tipoConsumo === TIPO_CONSUMO.PACOTE}
-                    disabled={categoria === CATEGORIA.EXECUTIVO}
                     onChange={() => setTipoConsumo(TIPO_CONSUMO.PACOTE)}
                   />
                   Usar pacote de corridas
                 </label>
 
                 {corBeneficio && (
-                  <label className={`flex items-center gap-2 ${!beneficio.disponivelParaUso || categoria === CATEGORIA.EXECUTIVO ? 'opacity-60' : ''}`}>
+                  <label className={`flex items-center gap-2 ${!beneficio.disponivelParaUso ? 'opacity-60' : ''}`}>
                     <input
                       type="radio"
                       checked={tipoConsumo === TIPO_CONSUMO.BENEFICIO}
-                      disabled={!beneficio.disponivelParaUso || categoria === CATEGORIA.EXECUTIVO}
+                      disabled={!beneficio.disponivelParaUso}
                       onChange={() => setTipoConsumo(TIPO_CONSUMO.BENEFICIO)}
                     />
                     Corrida {corBeneficio.nome.toLowerCase()} grátis do plano
                   </label>
                 )}
               </div>
+
+              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                A categoria Executivo (veículo até 3 anos, sedan médio ou SUV) só vale pra corrida
+                avulsa — você escolhe a categoria na próxima tela, depois de ver os dois preços.
+              </p>
 
               {corBeneficio && !beneficio.disponivelParaUso && (
                 <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
@@ -295,12 +272,14 @@ export default function PedirCorridaPage() {
           <RideConfirmCard
             estimativa={estimativa}
             modo={etapa}
+            categoria={categoria}
+            onCategoriaChange={setCategoria}
             onConfirmar={handleConfirmar}
             onCancelar={() => setEtapa('form')}
             confirmando={confirmando}
             erro={erro || erroFaixaPacote || erroFaixaBeneficio}
             bloqueado={Boolean(erroFaixaPacote || erroFaixaBeneficio)}
-            gratisPlano={tipoConsumo === TIPO_CONSUMO.BENEFICIO}
+            gratisPlano={tipoConsumo === TIPO_CONSUMO.BENEFICIO && categoria === CATEGORIA.NORMAL}
             avulsa={tipoConsumo === TIPO_CONSUMO.AVULSA}
             onConfirmarPix={handleConfirmarPix}
             confirmandoPix={confirmandoPix}
