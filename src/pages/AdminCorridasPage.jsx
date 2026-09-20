@@ -11,6 +11,7 @@ export default function AdminCorridasPage() {
   const [erro, setErro] = useState('')
   const [busca, setBusca] = useState('')
   const [statusFiltro, setStatusFiltro] = useState('todos')
+  const [estatisticasUsuarios, setEstatisticasUsuarios] = useState(null)
 
   useEffect(() => {
     api
@@ -18,6 +19,22 @@ export default function AdminCorridasPage() {
       .then(({ data }) => setCorridas(data))
       .catch((error) => setErro(extrairMensagemErro(error)))
       .finally(() => setCarregando(false))
+  }, [])
+
+  // Contador de usuários total/logados agora no topo do painel — ver AdminUsuariosController.
+  // Recarrega a cada 30s pra "logados agora" não ficar parado (é aproximado, baseado em
+  // UltimoAcessoEm, ver comentário no backend).
+  useEffect(() => {
+    function buscar() {
+      api
+        .get('/admin/usuarios/estatisticas')
+        .then(({ data }) => setEstatisticasUsuarios(data))
+        .catch(() => {})
+    }
+
+    buscar()
+    const intervalo = setInterval(buscar, 30000)
+    return () => clearInterval(intervalo)
   }, [])
 
   const corridasFiltradas = useMemo(() => {
@@ -40,6 +57,23 @@ export default function AdminCorridasPage() {
       </AppNavbar>
 
       <main className="mx-auto mt-8 max-w-5xl px-4">
+        {estatisticasUsuarios && (
+          <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="rounded-lg border border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
+              <p className="text-xs text-gray-500 dark:text-gray-400">Total de usuários</p>
+              <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">{estatisticasUsuarios.totalUsuarios}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500">
+                {estatisticasUsuarios.totalClientes} clientes · {estatisticasUsuarios.totalMotoristas} motoristas
+              </p>
+            </div>
+            <div className="rounded-lg border border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
+              <p className="text-xs text-gray-500 dark:text-gray-400">Logados agora</p>
+              <p className="text-2xl font-bold text-green-600 dark:text-green-400">{estatisticasUsuarios.logadosAgora}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500">Ativos nos últimos 5 min</p>
+            </div>
+          </div>
+        )}
+
         {erro && (
           <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
             {erro}

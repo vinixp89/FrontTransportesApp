@@ -5,9 +5,13 @@ import { obterFaixa, formatarPreco } from '../constants/faixas'
 import ThemeToggleButton from '../components/ThemeToggleButton'
 import AppNavbar from '../components/AppNavbar'
 
+// Espelha CategoriaCorrida do backend (0 = Normal, 1 = Executivo).
+const CATEGORIA = { NORMAL: 0, EXECUTIVO: 1 }
+
 export default function PacotesPage() {
   const navigate = useNavigate()
 
+  const [categoria, setCategoria] = useState(CATEGORIA.NORMAL)
   const [catalogo, setCatalogo] = useState([])
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
@@ -17,12 +21,15 @@ export default function PacotesPage() {
   const [selecionado, setSelecionado] = useState('')
 
   useEffect(() => {
+    setCarregando(true)
+    setSelecionado('')
+
     api
-      .get('/PacotesCorridas/catalogo')
+      .get('/PacotesCorridas/catalogo', { params: { categoria } })
       .then(({ data }) => setCatalogo(data))
       .catch((error) => setErro(extrairMensagemErro(error)))
       .finally(() => setCarregando(false))
-  }, [])
+  }, [categoria])
 
   async function handleComprarPix(faixaValor, quantidade) {
     const chave = `${faixaValor}-${quantidade}`
@@ -30,7 +37,7 @@ export default function PacotesPage() {
     setErro('')
 
     try {
-      const { data } = await api.post('/PacotesCorridas/comprar-pix', { faixa: faixaValor, quantidade })
+      const { data } = await api.post('/PacotesCorridas/comprar-pix', { faixa: faixaValor, quantidade, categoria })
       setSelecionado('')
       navigate('/pagamento-pix', {
         state: {
@@ -53,7 +60,7 @@ export default function PacotesPage() {
     setErro('')
 
     try {
-      const { data } = await api.post('/PacotesCorridas/comprar', { faixa: faixaValor, quantidade })
+      const { data } = await api.post('/PacotesCorridas/comprar', { faixa: faixaValor, quantidade, categoria })
       setSelecionado('')
       window.location.href = data.checkoutUrl
     } catch (error) {
@@ -69,8 +76,34 @@ export default function PacotesPage() {
       </AppNavbar>
 
       <main className="mx-auto mt-8 max-w-2xl px-4">
+        <div className="mb-4 flex gap-2 rounded-lg bg-gray-100 p-1 dark:bg-gray-800">
+          <button
+            type="button"
+            onClick={() => setCategoria(CATEGORIA.NORMAL)}
+            className={`flex-1 rounded-md py-2 text-sm font-semibold transition ${
+              categoria === CATEGORIA.NORMAL
+                ? 'bg-green-600 text-white'
+                : 'text-gray-600 dark:text-gray-300'
+            }`}
+          >
+            Normal
+          </button>
+          <button
+            type="button"
+            onClick={() => setCategoria(CATEGORIA.EXECUTIVO)}
+            className={`flex-1 rounded-md py-2 text-sm font-semibold transition ${
+              categoria === CATEGORIA.EXECUTIVO
+                ? 'bg-green-600 text-white'
+                : 'text-gray-600 dark:text-gray-300'
+            }`}
+          >
+            Executivo
+          </button>
+        </div>
+
         <p className="mb-6 text-sm text-gray-500 dark:text-gray-400">
-          Cada pacote vale só pra corridas que caírem na mesma faixa de distância. O preço é o
+          Cada pacote vale só pra corridas que caírem na mesma faixa de distância
+          {categoria === CATEGORIA.EXECUTIVO ? ' e na categoria Executivo' : ''}. O preço é o
           mesmo da corrida avulsa multiplicado pela quantidade — a vantagem é já deixar pago e
           pronto pra usar.
         </p>

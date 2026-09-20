@@ -108,6 +108,7 @@ export default function RideConfirmCard({
             }`}
             style={categoria === CATEGORIA.NORMAL ? { borderColor: faixa.hex } : undefined}
           >
+            <div className="text-xl">🚗</div>
             <div className={`text-xs font-semibold uppercase tracking-wide ${cores.subtexto}`}>Normal</div>
             <div className="mt-0.5 text-lg font-bold" style={{ color: faixa.hex }}>
               {gratisPlano ? 'Grátis' : formatarPreco(estimativa.valorReferenciaNormal)}
@@ -124,6 +125,7 @@ export default function RideConfirmCard({
             }`}
             style={categoria === CATEGORIA.EXECUTIVO ? { borderColor: faixa.hex } : undefined}
           >
+            <div className="text-xl">🚙</div>
             <div className={`text-xs font-semibold uppercase tracking-wide ${cores.subtexto}`}>Executivo</div>
             <div className="mt-0.5 text-lg font-bold" style={{ color: faixa.hex }}>
               {formatarPreco(estimativa.valorReferenciaExecutivo)}
