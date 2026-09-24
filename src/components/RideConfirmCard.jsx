@@ -1,6 +1,8 @@
 import RideMap from './RideMap'
 import { obterFaixa, formatarPreco, formatarDuracao } from '../constants/faixas'
 import { useTheme } from '../context/ThemeContext'
+import carroNormal from '../assets/categorias/carro-normal.svg'
+import carroExecutivo from '../assets/categorias/carro-executivo.svg'
 
 // Cartão de confirmação/status da corrida — selo colorido por faixa, endereços, mapa e valor,
 // inspirado no layout que o motorista vê pra aceitar corridas (mesma linguagem visual, adaptada
@@ -108,7 +110,7 @@ export default function RideConfirmCard({
             }`}
             style={categoria === CATEGORIA.NORMAL ? { borderColor: faixa.hex } : undefined}
           >
-            <div className="text-xl">🚗</div>
+            <img src={carroNormal} alt="" className="mb-1 h-9 w-[72px]" />
             <div className={`text-xs font-semibold uppercase tracking-wide ${cores.subtexto}`}>Normal</div>
             <div className="mt-0.5 text-lg font-bold" style={{ color: faixa.hex }}>
               {gratisPlano ? 'Grátis' : formatarPreco(estimativa.valorReferenciaNormal)}
@@ -125,7 +127,7 @@ export default function RideConfirmCard({
             }`}
             style={categoria === CATEGORIA.EXECUTIVO ? { borderColor: faixa.hex } : undefined}
           >
-            <div className="text-xl">🚙</div>
+            <img src={carroExecutivo} alt="" className="mb-1 h-9 w-[72px]" />
             <div className={`text-xs font-semibold uppercase tracking-wide ${cores.subtexto}`}>Executivo</div>
             <div className="mt-0.5 text-lg font-bold" style={{ color: faixa.hex }}>
               {formatarPreco(estimativa.valorReferenciaExecutivo)}
