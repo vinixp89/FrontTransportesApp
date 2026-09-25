@@ -96,6 +96,18 @@ export default function HomePage() {
               </Link>
             )}
 
+            {usuario.roles.includes('Admin') && (
+              <Link
+                to="/admin/avisos"
+                className="rounded-2xl bg-gray-800 p-6 text-white shadow-lg transition hover:bg-gray-900"
+              >
+                <h3 className="text-lg font-semibold">Avisos do app</h3>
+                <p className="mt-1 text-sm text-gray-300">
+                  Crie o pop-up de promoção/novidade que aparece ao abrir o app Cliente.
+                </p>
+              </Link>
+            )}
+
             {usuario.roles.includes('Cliente') ? (
               <>
                 <Link
