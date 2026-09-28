@@ -108,6 +108,18 @@ export default function HomePage() {
               </Link>
             )}
 
+            {usuario.roles.includes('Admin') && (
+              <Link
+                to="/admin/saques"
+                className="rounded-2xl bg-gray-800 p-6 text-white shadow-lg transition hover:bg-gray-900"
+              >
+                <h3 className="text-lg font-semibold">Saques de motoristas</h3>
+                <p className="mt-1 text-sm text-gray-300">
+                  Aprove ou rejeite os pedidos de saque pendentes.
+                </p>
+              </Link>
+            )}
+
             {usuario.roles.includes('Cliente') ? (
               <>
                 <Link

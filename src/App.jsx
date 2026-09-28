@@ -18,6 +18,7 @@ import CorridasMotoristaPage from './pages/CorridasMotoristaPage'
 import AdminCorridasPage from './pages/AdminCorridasPage'
 import AdminExecutivoPage from './pages/AdminExecutivoPage'
 import AdminAvisosPage from './pages/AdminAvisosPage'
+import AdminSaquesPage from './pages/AdminSaquesPage'
 import MotoristaExecutivoPage from './pages/MotoristaExecutivoPage'
 import DoarCorridaPage from './pages/DoarCorridaPage'
 import PoliticaPrivacidadePage from './pages/PoliticaPrivacidadePage'
@@ -150,6 +151,14 @@ function App() {
               element={
                 <ProtectedRoute role="Admin">
                   <AdminAvisosPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/saques"
+              element={
+                <ProtectedRoute role="Admin">
+                  <AdminSaquesPage />
                 </ProtectedRoute>
               }
             />
