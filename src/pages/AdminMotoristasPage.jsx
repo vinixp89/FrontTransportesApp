@@ -9,6 +9,12 @@ const STATUS_LABEL = {
   2: { texto: 'Em corrida', cor: 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300' },
 }
 
+// StatusConta: 0 Ativa, 1 Suspensa, 2 Banida (ver StatusContaMotorista no backend).
+const CONTA_STATUS_LABEL = {
+  1: { texto: 'Suspenso', cor: 'bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300' },
+  2: { texto: 'Excluído', cor: 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300' },
+}
+
 function formatarCpf(cpf) {
   if (!cpf || cpf.length !== 11) return cpf
   return `${cpf.slice(0, 3)}.${cpf.slice(3, 6)}.${cpf.slice(6, 9)}-${cpf.slice(9)}`
@@ -77,10 +83,85 @@ function Selo({ ok, textoOk, textoFalta }) {
   )
 }
 
-function MotoristaCard({ motorista }) {
+function MotoristaCard({ motorista, onAtualizar }) {
   const [aberto, setAberto] = useState(false)
+  const [acao, setAcao] = useState(null) // null | 'suspender' | 'excluir'
+  const [motivo, setMotivo] = useState('')
+  const [dias, setDias] = useState('3')
+  const [processando, setProcessando] = useState(false)
+  const [erroAcao, setErroAcao] = useState('')
+
   const status = STATUS_LABEL[motorista.status] ?? STATUS_LABEL[0]
+  const contaStatus = CONTA_STATUS_LABEL[motorista.statusConta]
   const endereco = motorista.endereco
+
+  function cancelarAcao() {
+    setAcao(null)
+    setMotivo('')
+    setErroAcao('')
+  }
+
+  async function confirmarSuspender() {
+    if (!motivo.trim()) {
+      setErroAcao('Informe o motivo da suspensão.')
+      return
+    }
+
+    setProcessando(true)
+    setErroAcao('')
+
+    try {
+      const { data } = await api.post(`/Motoristas/${motorista.id}/suspender`, {
+        motivo: motivo.trim(),
+        dias: dias === 'definitivo' ? null : Number(dias),
+      })
+      onAtualizar(data)
+      cancelarAcao()
+    } catch (error) {
+      setErroAcao(extrairMensagemErro(error))
+    } finally {
+      setProcessando(false)
+    }
+  }
+
+  async function confirmarExcluir() {
+    if (!motivo.trim()) {
+      setErroAcao('Informe o motivo da exclusão.')
+      return
+    }
+
+    if (!window.confirm('Excluir o cadastro desse motorista por violação dos termos? Ele não vai mais conseguir logar (dá pra reverter depois em "Reativar").'))
+      return
+
+    setProcessando(true)
+    setErroAcao('')
+
+    try {
+      const { data } = await api.post(`/Motoristas/${motorista.id}/banir`, { motivo: motivo.trim() })
+      onAtualizar(data)
+      cancelarAcao()
+    } catch (error) {
+      setErroAcao(extrairMensagemErro(error))
+    } finally {
+      setProcessando(false)
+    }
+  }
+
+  async function reativar() {
+    if (!window.confirm('Reativar essa conta? O motorista volta a conseguir logar normalmente.')) return
+
+    setProcessando(true)
+    setErroAcao('')
+
+    try {
+      const { data } = await api.post(`/Motoristas/${motorista.id}/reativar`)
+      onAtualizar(data)
+    } catch (error) {
+      setErroAcao(extrairMensagemErro(error))
+    } finally {
+      setProcessando(false)
+    }
+  }
 
   return (
     <div className="rounded-2xl bg-white shadow dark:bg-gray-800">
@@ -98,6 +179,9 @@ function MotoristaCard({ motorista }) {
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-400 dark:text-gray-500">★ {motorista.avaliacaoMeida.toFixed(1)}</span>
+          {contaStatus && (
+            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${contaStatus.cor}`}>{contaStatus.texto}</span>
+          )}
           <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${status.cor}`}>{status.texto}</span>
           <span className="text-gray-400">{aberto ? '▲' : '▼'}</span>
         </div>
@@ -124,10 +208,132 @@ function MotoristaCard({ motorista }) {
             <Selo ok={motorista.fotosEnviadas} textoOk="Fotos enviadas" textoFalta="Sem fotos enviadas" />
           </div>
 
+          {motorista.statusConta !== 0 && (
+            <div className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
+              <p className="font-semibold">
+                {motorista.statusConta === 2
+                  ? 'Conta excluída por violação dos termos'
+                  : `Conta suspensa ${motorista.bloqueadoAte ? `até ${formatarData(motorista.bloqueadoAte)}` : 'definitivamente'}`}
+              </p>
+              <p className="mt-0.5">Motivo: {motorista.motivoBloqueio}</p>
+            </div>
+          )}
+
           <div className="mt-5 flex flex-wrap justify-center gap-4 sm:justify-start">
             <FotoMotorista motoristaId={motorista.id} tipo="selfie" label="Selfie" disponivel={motorista.fotosEnviadas} />
             <FotoMotorista motoristaId={motorista.id} tipo="veiculo" label="Veículo" disponivel={motorista.fotosEnviadas} />
             <FotoMotorista motoristaId={motorista.id} tipo="placa" label="Placa" disponivel={motorista.fotosEnviadas} />
+          </div>
+
+          <div className="mt-5 border-t border-gray-100 pt-4 dark:border-gray-700">
+            {acao === null && (
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setAcao('suspender')}
+                  className="rounded-lg border border-orange-400 px-3 py-1.5 text-xs font-semibold text-orange-600 transition hover:bg-orange-50 dark:text-orange-400 dark:hover:bg-orange-950"
+                >
+                  Suspender
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAcao('excluir')}
+                  className="rounded-lg border border-red-400 px-3 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950"
+                >
+                  Excluir cadastro
+                </button>
+                {motorista.statusConta !== 0 && (
+                  <button
+                    type="button"
+                    onClick={reativar}
+                    disabled={processando}
+                    className="rounded-lg border border-green-400 px-3 py-1.5 text-xs font-semibold text-green-600 transition hover:bg-green-50 disabled:opacity-60 dark:text-green-400 dark:hover:bg-green-950"
+                  >
+                    Reativar conta
+                  </button>
+                )}
+              </div>
+            )}
+
+            {acao === 'suspender' && (
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Motivo da suspensão</label>
+                <textarea
+                  value={motivo}
+                  onChange={(e) => setMotivo(e.target.value)}
+                  rows={2}
+                  placeholder="Ex.: Reclamações repetidas de comportamento"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+                />
+                <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Por quanto tempo</label>
+                <select
+                  value={dias}
+                  onChange={(e) => setDias(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+                >
+                  <option value="3">3 dias</option>
+                  <option value="7">7 dias</option>
+                  <option value="15">15 dias</option>
+                  <option value="30">30 dias</option>
+                  <option value="definitivo">Definitivamente</option>
+                </select>
+
+                {erroAcao && <p className="text-xs text-red-600 dark:text-red-400">{erroAcao}</p>}
+
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={confirmarSuspender}
+                    disabled={processando}
+                    className="flex-1 rounded-lg bg-orange-500 py-2 text-sm font-semibold text-white transition hover:bg-orange-600 disabled:opacity-60"
+                  >
+                    {processando ? 'Suspendendo...' : 'Confirmar suspensão'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={cancelarAcao}
+                    disabled={processando}
+                    className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 dark:border-gray-600 dark:text-gray-300"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {acao === 'excluir' && (
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Motivo da exclusão</label>
+                <textarea
+                  value={motivo}
+                  onChange={(e) => setMotivo(e.target.value)}
+                  rows={2}
+                  placeholder="Ex.: Fraude comprovada em corrida"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+                />
+
+                {erroAcao && <p className="text-xs text-red-600 dark:text-red-400">{erroAcao}</p>}
+
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={confirmarExcluir}
+                    disabled={processando}
+                    className="flex-1 rounded-lg bg-red-600 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+                  >
+                    {processando ? 'Excluindo...' : 'Confirmar exclusão'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={cancelarAcao}
+                    disabled={processando}
+                    className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 dark:border-gray-600 dark:text-gray-300"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -157,6 +363,10 @@ export default function AdminMotoristasPage() {
       [m.nome, m.cpf, m.placaVeiculo, m.telefone].some((campo) => campo?.toLowerCase().includes(termo))
     )
   }, [motoristas, busca])
+
+  function handleAtualizarMotorista(atualizado) {
+    setMotoristas((atual) => atual.map((m) => (m.id === atualizado.id ? atualizado : m)))
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-16 dark:bg-gray-900">
@@ -194,7 +404,7 @@ export default function AdminMotoristasPage() {
 
         <div className="flex flex-col gap-3">
           {filtrados.map((motorista) => (
-            <MotoristaCard key={motorista.id} motorista={motorista} />
+            <MotoristaCard key={motorista.id} motorista={motorista} onAtualizar={handleAtualizarMotorista} />
           ))}
         </div>
       </main>
