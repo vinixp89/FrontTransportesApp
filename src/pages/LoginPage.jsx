@@ -85,11 +85,6 @@ export default function LoginPage() {
             {carregando ? 'Entrando...' : 'Entrar'}
           </button>
         </form>
-
-        <p className="mt-6 text-center text-xs text-gray-400 dark:text-gray-500">
-          Ainda não tem conta? Cadastre-se pelo Swagger da API por enquanto
-          (<code>/api/Auth/registrar-cliente</code> ou <code>/registrar-motorista</code>).
-        </p>
       </div>
       </div>
     </div>
