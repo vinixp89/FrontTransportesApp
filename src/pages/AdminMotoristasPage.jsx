@@ -27,12 +27,19 @@ function formatarData(iso) {
 // Fotos de verificação exigem o token JWT no header (não dá pra usar <img src="..."> direto) —
 // mesmo padrão do AdminExecutivoPage: busca como blob autenticado e vira uma object URL. Só
 // carrega quando o card é expandido, pra não baixar foto de todo motorista da lista de uma vez.
-function FotoMotorista({ motoristaId, tipo, label, disponivel }) {
+// O Admin também pode enviar/trocar a foto direto por aqui (útil quando o motorista não conseguiu
+// mandar pelo app) — "versao" força recarregar a prévia depois de um upload.
+function FotoMotorista({ motoristaId, tipo, label, disponivel, onAtualizar }) {
   const [url, setUrl] = useState(null)
   const [erro, setErro] = useState(false)
+  const [versao, setVersao] = useState(0)
+  const [enviando, setEnviando] = useState(false)
 
   useEffect(() => {
-    if (!disponivel) return
+    if (!disponivel) {
+      setUrl(null)
+      return
+    }
 
     let objectUrl
     let cancelado = false
@@ -50,21 +57,53 @@ function FotoMotorista({ motoristaId, tipo, label, disponivel }) {
       cancelado = true
       if (objectUrl) URL.revokeObjectURL(objectUrl)
     }
-  }, [motoristaId, tipo, disponivel])
+  }, [motoristaId, tipo, disponivel, versao])
+
+  async function enviarArquivo(e) {
+    const arquivo = e.target.files?.[0]
+    e.target.value = ''
+    if (!arquivo) return
+
+    setEnviando(true)
+    setErro(false)
+
+    const formData = new FormData()
+    formData.append('arquivo', arquivo)
+
+    try {
+      const { data } = await api.post(`/Motoristas/${motoristaId}/foto-${tipo}`, formData)
+      onAtualizar(data)
+      setVersao((v) => v + 1)
+    } catch {
+      setErro(true)
+    } finally {
+      setEnviando(false)
+    }
+  }
 
   return (
     <div className="flex flex-col items-center gap-1.5">
       <div className="flex h-32 w-44 items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900">
-        {!disponivel && <span className="text-xs text-gray-400 dark:text-gray-500">Sem foto</span>}
+        {!disponivel && !erro && <span className="text-xs text-gray-400 dark:text-gray-500">Sem foto</span>}
         {disponivel && !url && !erro && <span className="text-xs text-gray-400 dark:text-gray-500">Carregando...</span>}
-        {disponivel && erro && <span className="text-xs text-red-400">Falha ao carregar</span>}
-        {disponivel && url && (
+        {erro && <span className="text-xs text-red-400">Falha ao carregar</span>}
+        {disponivel && url && !erro && (
           <a href={url} target="_blank" rel="noreferrer">
             <img src={url} alt={label} className="h-32 w-44 object-cover" />
           </a>
         )}
       </div>
       <span className="text-xs font-medium text-gray-500 dark:text-gray-400">{label}</span>
+      <label className="cursor-pointer text-xs font-medium text-blue-600 hover:underline dark:text-blue-400">
+        {enviando ? 'Enviando...' : disponivel ? 'Trocar foto' : 'Enviar foto'}
+        <input
+          type="file"
+          accept="image/jpeg,image/png"
+          className="hidden"
+          onChange={enviarArquivo}
+          disabled={enviando}
+        />
+      </label>
     </div>
   )
 }
@@ -83,6 +122,25 @@ function Selo({ ok, textoOk, textoFalta }) {
   )
 }
 
+function formVazioDeMotorista(motorista) {
+  const endereco = motorista.endereco
+  return {
+    nome: motorista.nome,
+    cnh: motorista.cnh,
+    cpf: motorista.cpf,
+    telefone: motorista.telefone,
+    placaVeiculo: motorista.placaVeiculo,
+    modeloVeiculo: motorista.modeloVeiculo,
+    anoVeiculo: motorista.anoVeiculo ?? '',
+    logradouro: endereco.logradouro,
+    numero: endereco.numero,
+    complemento: endereco.complemento ?? '',
+    bairro: endereco.bairro,
+    cidade: endereco.cidade,
+    estado: endereco.estado,
+  }
+}
+
 function MotoristaCard({ motorista, onAtualizar }) {
   const [aberto, setAberto] = useState(false)
   const [acao, setAcao] = useState(null) // null | 'suspender' | 'excluir'
@@ -90,6 +148,11 @@ function MotoristaCard({ motorista, onAtualizar }) {
   const [dias, setDias] = useState('3')
   const [processando, setProcessando] = useState(false)
   const [erroAcao, setErroAcao] = useState('')
+
+  const [editando, setEditando] = useState(false)
+  const [formEdicao, setFormEdicao] = useState(() => formVazioDeMotorista(motorista))
+  const [salvandoEdicao, setSalvandoEdicao] = useState(false)
+  const [erroEdicao, setErroEdicao] = useState('')
 
   const status = STATUS_LABEL[motorista.status] ?? STATUS_LABEL[0]
   const contaStatus = CONTA_STATUS_LABEL[motorista.statusConta]
@@ -99,6 +162,31 @@ function MotoristaCard({ motorista, onAtualizar }) {
     setAcao(null)
     setMotivo('')
     setErroAcao('')
+  }
+
+  function iniciarEdicao() {
+    setFormEdicao(formVazioDeMotorista(motorista))
+    setErroEdicao('')
+    setEditando(true)
+  }
+
+  async function salvarEdicao(e) {
+    e.preventDefault()
+    setSalvandoEdicao(true)
+    setErroEdicao('')
+
+    try {
+      const { data } = await api.put(`/Motoristas/${motorista.id}`, {
+        ...formEdicao,
+        anoVeiculo: formEdicao.anoVeiculo === '' ? null : Number(formEdicao.anoVeiculo),
+      })
+      onAtualizar(data)
+      setEditando(false)
+    } catch (error) {
+      setErroEdicao(extrairMensagemErro(error))
+    } finally {
+      setSalvandoEdicao(false)
+    }
   }
 
   async function confirmarSuspender() {
@@ -189,19 +277,192 @@ function MotoristaCard({ motorista, onAtualizar }) {
 
       {aberto && (
         <div className="border-t border-gray-100 p-5 dark:border-gray-700">
-          <div className="grid gap-x-6 gap-y-2 text-sm text-gray-700 dark:text-gray-300 sm:grid-cols-2">
-            <p><span className="text-gray-400 dark:text-gray-500">CNH:</span> {motorista.cnh}</p>
-            <p><span className="text-gray-400 dark:text-gray-500">Telefone:</span> {motorista.telefone}</p>
-            <p><span className="text-gray-400 dark:text-gray-500">Veículo:</span> {motorista.modeloVeiculo} · {motorista.placaVeiculo}</p>
-            <p><span className="text-gray-400 dark:text-gray-500">Ano de fabricação:</span> {motorista.anoVeiculo ?? '—'}</p>
-            <p className="sm:col-span-2">
-              <span className="text-gray-400 dark:text-gray-500">Endereço:</span>{' '}
-              {endereco.logradouro}, {endereco.numero}
-              {endereco.complemento ? ` (${endereco.complemento})` : ''} — {endereco.bairro}, {endereco.cidade}/{endereco.estado}
-            </p>
-            <p><span className="text-gray-400 dark:text-gray-500">Cadastrado em:</span> {formatarData(motorista.dataCadastro)}</p>
-          </div>
+          {!editando && (
+            <>
+              <div className="grid gap-x-6 gap-y-2 text-sm text-gray-700 dark:text-gray-300 sm:grid-cols-2">
+                <p><span className="text-gray-400 dark:text-gray-500">CNH:</span> {motorista.cnh}</p>
+                <p><span className="text-gray-400 dark:text-gray-500">Telefone:</span> {motorista.telefone}</p>
+                <p><span className="text-gray-400 dark:text-gray-500">Veículo:</span> {motorista.modeloVeiculo} · {motorista.placaVeiculo}</p>
+                <p><span className="text-gray-400 dark:text-gray-500">Ano de fabricação:</span> {motorista.anoVeiculo ?? '—'}</p>
+                <p className="sm:col-span-2">
+                  <span className="text-gray-400 dark:text-gray-500">Endereço:</span>{' '}
+                  {endereco.logradouro}, {endereco.numero}
+                  {endereco.complemento ? ` (${endereco.complemento})` : ''} — {endereco.bairro}, {endereco.cidade}/{endereco.estado}
+                </p>
+                <p><span className="text-gray-400 dark:text-gray-500">Cadastrado em:</span> {formatarData(motorista.dataCadastro)}</p>
+              </div>
 
+              <button
+                type="button"
+                onClick={iniciarEdicao}
+                className="mt-2 text-xs font-medium text-blue-600 hover:underline dark:text-blue-400"
+              >
+                Editar dados
+              </button>
+            </>
+          )}
+
+          {editando && (
+            <form onSubmit={salvarEdicao} className="flex flex-col gap-3">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Nome</label>
+                  <input
+                    type="text"
+                    required
+                    value={formEdicao.nome}
+                    onChange={(e) => setFormEdicao((f) => ({ ...f, nome: e.target.value }))}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">CNH</label>
+                  <input
+                    type="text"
+                    required
+                    value={formEdicao.cnh}
+                    onChange={(e) => setFormEdicao((f) => ({ ...f, cnh: e.target.value }))}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">CPF</label>
+                  <input
+                    type="text"
+                    required
+                    value={formEdicao.cpf}
+                    onChange={(e) => setFormEdicao((f) => ({ ...f, cpf: e.target.value }))}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Telefone</label>
+                  <input
+                    type="text"
+                    required
+                    value={formEdicao.telefone}
+                    onChange={(e) => setFormEdicao((f) => ({ ...f, telefone: e.target.value }))}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Placa</label>
+                  <input
+                    type="text"
+                    required
+                    value={formEdicao.placaVeiculo}
+                    onChange={(e) => setFormEdicao((f) => ({ ...f, placaVeiculo: e.target.value }))}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Modelo do veículo</label>
+                  <input
+                    type="text"
+                    required
+                    value={formEdicao.modeloVeiculo}
+                    onChange={(e) => setFormEdicao((f) => ({ ...f, modeloVeiculo: e.target.value }))}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Ano de fabricação</label>
+                  <input
+                    type="number"
+                    value={formEdicao.anoVeiculo}
+                    onChange={(e) => setFormEdicao((f) => ({ ...f, anoVeiculo: e.target.value }))}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+                  />
+                </div>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="sm:col-span-2">
+                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Logradouro</label>
+                  <input
+                    type="text"
+                    required
+                    value={formEdicao.logradouro}
+                    onChange={(e) => setFormEdicao((f) => ({ ...f, logradouro: e.target.value }))}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Número</label>
+                  <input
+                    type="text"
+                    required
+                    value={formEdicao.numero}
+                    onChange={(e) => setFormEdicao((f) => ({ ...f, numero: e.target.value }))}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Complemento</label>
+                  <input
+                    type="text"
+                    value={formEdicao.complemento}
+                    onChange={(e) => setFormEdicao((f) => ({ ...f, complemento: e.target.value }))}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Bairro</label>
+                  <input
+                    type="text"
+                    required
+                    value={formEdicao.bairro}
+                    onChange={(e) => setFormEdicao((f) => ({ ...f, bairro: e.target.value }))}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Cidade</label>
+                  <input
+                    type="text"
+                    required
+                    value={formEdicao.cidade}
+                    onChange={(e) => setFormEdicao((f) => ({ ...f, cidade: e.target.value }))}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Estado</label>
+                  <input
+                    type="text"
+                    required
+                    maxLength={2}
+                    value={formEdicao.estado}
+                    onChange={(e) => setFormEdicao((f) => ({ ...f, estado: e.target.value.toUpperCase() }))}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+                  />
+                </div>
+              </div>
+
+              {erroEdicao && <p className="text-xs text-red-600 dark:text-red-400">{erroEdicao}</p>}
+
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  disabled={salvandoEdicao}
+                  className="flex-1 rounded-lg bg-green-600 py-2 text-sm font-semibold text-white transition hover:bg-green-700 disabled:opacity-60"
+                >
+                  {salvandoEdicao ? 'Salvando...' : 'Salvar alterações'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditando(false)}
+                  disabled={salvandoEdicao}
+                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 dark:border-gray-600 dark:text-gray-300"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          )}
+
+          {!editando && (
+          <>
           <div className="mt-3 flex flex-wrap gap-2">
             <Selo ok={motorista.telefoneVerificado} textoOk="Telefone verificado" textoFalta="Telefone não verificado" />
             <Selo ok={motorista.termosAceitos} textoOk="Termos aceitos" textoFalta="Termos pendentes" />
@@ -220,9 +481,9 @@ function MotoristaCard({ motorista, onAtualizar }) {
           )}
 
           <div className="mt-5 flex flex-wrap justify-center gap-4 sm:justify-start">
-            <FotoMotorista motoristaId={motorista.id} tipo="selfie" label="Selfie" disponivel={motorista.fotosEnviadas} />
-            <FotoMotorista motoristaId={motorista.id} tipo="veiculo" label="Veículo" disponivel={motorista.fotosEnviadas} />
-            <FotoMotorista motoristaId={motorista.id} tipo="placa" label="Placa" disponivel={motorista.fotosEnviadas} />
+            <FotoMotorista motoristaId={motorista.id} tipo="selfie" label="Selfie" disponivel={motorista.temFotoSelfie} onAtualizar={onAtualizar} />
+            <FotoMotorista motoristaId={motorista.id} tipo="veiculo" label="Veículo" disponivel={motorista.temFotoVeiculo} onAtualizar={onAtualizar} />
+            <FotoMotorista motoristaId={motorista.id} tipo="placa" label="Placa" disponivel={motorista.temFotoPlaca} onAtualizar={onAtualizar} />
           </div>
 
           <div className="mt-5 border-t border-gray-100 pt-4 dark:border-gray-700">
@@ -335,6 +596,8 @@ function MotoristaCard({ motorista, onAtualizar }) {
               </div>
             )}
           </div>
+          </>
+          )}
         </div>
       )}
     </div>
