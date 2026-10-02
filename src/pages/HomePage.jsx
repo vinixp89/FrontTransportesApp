@@ -122,6 +122,18 @@ export default function HomePage() {
 
             {usuario.roles.includes('Admin') && (
               <Link
+                to="/admin/suporte"
+                className="rounded-2xl bg-gray-800 p-6 text-white shadow-lg transition hover:bg-gray-900"
+              >
+                <h3 className="text-lg font-semibold">Suporte</h3>
+                <p className="mt-1 text-sm text-gray-300">
+                  Veja e responda as mensagens de Clientes e Motoristas.
+                </p>
+              </Link>
+            )}
+
+            {usuario.roles.includes('Admin') && (
+              <Link
                 to="/admin/notificacoes"
                 className="rounded-2xl bg-gray-800 p-6 text-white shadow-lg transition hover:bg-gray-900"
               >
