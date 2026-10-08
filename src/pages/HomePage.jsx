@@ -12,6 +12,7 @@ export default function HomePage() {
   const ehMotorista = usuario.roles.includes('Motorista')
   const ehAdmin = usuario.roles.includes('Admin')
   const [suportePendentes, setSuportePendentes] = useState(0)
+  const [bonusStatus, setBonusStatus] = useState(null)
 
   // Aviso de "nova mensagem" no card Suporte: conta as conversas em que o usuário falou por último.
   // Falha de rede é ignorada de propósito — é só um indicador, não deve poluir a Home.
@@ -28,7 +29,18 @@ export default function HomePage() {
       }
     }
 
+    // Vagas restantes do bônus de boas-vindas dos motoristas — só informativo, mesma regra de ignorar falha.
+    async function buscarBonus() {
+      try {
+        const { data } = await api.get('/admin/bonus-motorista/status')
+        if (ativo) setBonusStatus(data)
+      } catch {
+        // ignora
+      }
+    }
+
     buscar()
+    buscarBonus()
     const intervalo = setInterval(buscar, 15000)
     return () => {
       ativo = false
@@ -164,6 +176,22 @@ export default function HomePage() {
                     : 'Veja e responda as mensagens de Clientes e Motoristas.'}
                 </p>
               </Link>
+            )}
+
+            {usuario.roles.includes('Admin') && bonusStatus && (
+              <div className="rounded-2xl bg-gray-800 p-6 text-white shadow-lg">
+                <h3 className="text-lg font-semibold">Bônus de motoristas</h3>
+                <p className="mt-1 text-2xl font-bold">
+                  {bonusStatus.vagasRestantes}{' '}
+                  <span className="text-sm font-normal text-gray-300">
+                    {bonusStatus.vagasRestantes === 1 ? 'vaga restante' : 'vagas restantes'} de {bonusStatus.limiteVagas}
+                  </span>
+                </p>
+                <p className="mt-1 text-sm text-gray-300">
+                  R$ {bonusStatus.valorBonus} por motorista · {bonusStatus.vagasReservadas} cadastrados ·{' '}
+                  {bonusStatus.bonusLiberados} já fizeram a 1ª corrida
+                </p>
+              </div>
             )}
 
             {usuario.roles.includes('Admin') && (
