@@ -189,7 +189,7 @@ export default function HomePage() {
                 </p>
                 <p className="mt-1 text-sm text-gray-300">
                   R$ {bonusStatus.valorBonus} por motorista · {bonusStatus.vagasReservadas} cadastrados ·{' '}
-                  {bonusStatus.bonusLiberados} já fizeram a 1ª corrida
+                  {bonusStatus.bonusLiberados} {bonusStatus.bonusLiberados === 1 ? 'já fez' : 'já fizeram'} a 1ª corrida
                 </p>
               </div>
             )}
