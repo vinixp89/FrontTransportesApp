@@ -187,6 +187,16 @@ export default function AdminSuportePage() {
     return () => clearInterval(intervalo)
   }, [carregarConversas])
 
+  // Contagem no título da aba, pra chamar atenção mesmo com outra aba em foco.
+  const pendentes = conversas.filter((c) => c.pendenteResposta).length
+  useEffect(() => {
+    const tituloOriginal = document.title
+    document.title = pendentes > 0 ? `(${pendentes}) Nova mensagem — suporte` : tituloOriginal
+    return () => {
+      document.title = tituloOriginal
+    }
+  }, [pendentes])
+
   function handleRespondida(usuarioId) {
     setConversas((atual) =>
       atual.map((c) => (c.usuarioId === usuarioId ? { ...c, pendenteResposta: false } : c))

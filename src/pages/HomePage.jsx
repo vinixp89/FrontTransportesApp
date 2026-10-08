@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import api from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import UserMenu from '../components/UserMenu'
 import ThemeToggleButton from '../components/ThemeToggleButton'
@@ -8,6 +10,31 @@ import MotoristaOnlineCard from '../components/MotoristaOnlineCard'
 export default function HomePage() {
   const { usuario, logout } = useAuth()
   const ehMotorista = usuario.roles.includes('Motorista')
+  const ehAdmin = usuario.roles.includes('Admin')
+  const [suportePendentes, setSuportePendentes] = useState(0)
+
+  // Aviso de "nova mensagem" no card Suporte: conta as conversas em que o usuário falou por último.
+  // Falha de rede é ignorada de propósito — é só um indicador, não deve poluir a Home.
+  useEffect(() => {
+    if (!ehAdmin) return undefined
+
+    let ativo = true
+    async function buscar() {
+      try {
+        const { data } = await api.get('/admin/suporte/pendentes/contagem')
+        if (ativo) setSuportePendentes(data.total)
+      } catch {
+        // ignora
+      }
+    }
+
+    buscar()
+    const intervalo = setInterval(buscar, 15000)
+    return () => {
+      ativo = false
+      clearInterval(intervalo)
+    }
+  }, [ehAdmin])
 
   return (
     // Perfil Motorista tem a cor de marca roxa (ver constants/brand.js) — aqui isso vira o fundo
@@ -123,11 +150,18 @@ export default function HomePage() {
             {usuario.roles.includes('Admin') && (
               <Link
                 to="/admin/suporte"
-                className="rounded-2xl bg-gray-800 p-6 text-white shadow-lg transition hover:bg-gray-900"
+                className="relative rounded-2xl bg-gray-800 p-6 text-white shadow-lg transition hover:bg-gray-900"
               >
+                {suportePendentes > 0 && (
+                  <span className="absolute right-4 top-4 flex h-6 min-w-6 items-center justify-center rounded-full bg-red-500 px-1.5 text-xs font-bold text-white">
+                    {suportePendentes}
+                  </span>
+                )}
                 <h3 className="text-lg font-semibold">Suporte</h3>
                 <p className="mt-1 text-sm text-gray-300">
-                  Veja e responda as mensagens de Clientes e Motoristas.
+                  {suportePendentes > 0
+                    ? `${suportePendentes} ${suportePendentes === 1 ? 'conversa aguardando' : 'conversas aguardando'} resposta.`
+                    : 'Veja e responda as mensagens de Clientes e Motoristas.'}
                 </p>
               </Link>
             )}
