@@ -179,7 +179,10 @@ export default function HomePage() {
             )}
 
             {usuario.roles.includes('Admin') && bonusStatus && (
-              <div className="rounded-2xl bg-gray-800 p-6 text-white shadow-lg">
+              <Link
+                to="/admin/bonus-motorista"
+                className="rounded-2xl bg-gray-800 p-6 text-white shadow-lg transition hover:bg-gray-900"
+              >
                 <h3 className="text-lg font-semibold">Bônus de motoristas</h3>
                 <p className="mt-1 text-2xl font-bold">
                   {bonusStatus.vagasRestantes}{' '}
@@ -191,7 +194,7 @@ export default function HomePage() {
                   R$ {bonusStatus.valorBonus} por motorista · {bonusStatus.vagasReservadas} cadastrados ·{' '}
                   {bonusStatus.bonusLiberados} {bonusStatus.bonusLiberados === 1 ? 'já fez' : 'já fizeram'} a 1ª corrida
                 </p>
-              </div>
+              </Link>
             )}
 
             {usuario.roles.includes('Admin') && (

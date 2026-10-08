@@ -20,6 +20,7 @@ import AdminExecutivoPage from './pages/AdminExecutivoPage'
 import AdminAvisosPage from './pages/AdminAvisosPage'
 import AdminSaquesPage from './pages/AdminSaquesPage'
 import AdminSuportePage from './pages/AdminSuportePage'
+import AdminBonusMotoristaPage from './pages/AdminBonusMotoristaPage'
 import AdminNotificacoesPage from './pages/AdminNotificacoesPage'
 import AdminMotoristasPage from './pages/AdminMotoristasPage'
 import MotoristaExecutivoPage from './pages/MotoristaExecutivoPage'
@@ -170,6 +171,14 @@ function App() {
               element={
                 <ProtectedRoute role="Admin">
                   <AdminSuportePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/bonus-motorista"
+              element={
+                <ProtectedRoute role="Admin">
+                  <AdminBonusMotoristaPage />
                 </ProtectedRoute>
               }
             />
