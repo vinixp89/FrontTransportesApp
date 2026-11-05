@@ -132,6 +132,7 @@ function formVazioDeMotorista(motorista) {
     placaVeiculo: motorista.placaVeiculo,
     modeloVeiculo: motorista.modeloVeiculo,
     anoVeiculo: motorista.anoVeiculo ?? '',
+    tipoVeiculo: motorista.tipoVeiculo ?? 0,
     logradouro: endereco.logradouro,
     numero: endereco.numero,
     complemento: endereco.complemento ?? '',
@@ -179,6 +180,7 @@ function MotoristaCard({ motorista, onAtualizar }) {
       const { data } = await api.put(`/Motoristas/${motorista.id}`, {
         ...formEdicao,
         anoVeiculo: formEdicao.anoVeiculo === '' ? null : Number(formEdicao.anoVeiculo),
+        tipoVeiculo: Number(formEdicao.tipoVeiculo),
       })
       onAtualizar(data)
       setEditando(false)
@@ -261,7 +263,7 @@ function MotoristaCard({ motorista, onAtualizar }) {
         <div>
           <p className="text-base font-semibold text-gray-800 dark:text-gray-100">{motorista.nome}</p>
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            CPF {formatarCpf(motorista.cpf)} · {motorista.placaVeiculo} · {motorista.modeloVeiculo}
+            CPF {formatarCpf(motorista.cpf)} · {motorista.tipoVeiculo === 1 ? '🏍️ Moto' : '🚗 Carro'} · {motorista.placaVeiculo} · {motorista.modeloVeiculo}
             {motorista.anoVeiculo ? ` (${motorista.anoVeiculo})` : ''}
           </p>
         </div>
@@ -282,7 +284,7 @@ function MotoristaCard({ motorista, onAtualizar }) {
               <div className="grid gap-x-6 gap-y-2 text-sm text-gray-700 dark:text-gray-300 sm:grid-cols-2">
                 <p><span className="text-gray-400 dark:text-gray-500">CNH:</span> {motorista.cnh}</p>
                 <p><span className="text-gray-400 dark:text-gray-500">Telefone:</span> {motorista.telefone}</p>
-                <p><span className="text-gray-400 dark:text-gray-500">Veículo:</span> {motorista.modeloVeiculo} · {motorista.placaVeiculo}</p>
+                <p><span className="text-gray-400 dark:text-gray-500">Veículo:</span> {motorista.tipoVeiculo === 1 ? 'Moto' : 'Carro'} · {motorista.modeloVeiculo} · {motorista.placaVeiculo}</p>
                 <p><span className="text-gray-400 dark:text-gray-500">Ano de fabricação:</span> {motorista.anoVeiculo ?? '—'}</p>
                 <p className="sm:col-span-2">
                   <span className="text-gray-400 dark:text-gray-500">Endereço:</span>{' '}
@@ -344,6 +346,17 @@ function MotoristaCard({ motorista, onAtualizar }) {
                     onChange={(e) => setFormEdicao((f) => ({ ...f, telefone: e.target.value }))}
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
                   />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Tipo de veículo</label>
+                  <select
+                    value={formEdicao.tipoVeiculo}
+                    onChange={(e) => setFormEdicao((f) => ({ ...f, tipoVeiculo: Number(e.target.value) }))}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+                  >
+                    <option value={0}>Carro</option>
+                    <option value={1}>Moto</option>
+                  </select>
                 </div>
                 <div>
                   <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Placa</label>

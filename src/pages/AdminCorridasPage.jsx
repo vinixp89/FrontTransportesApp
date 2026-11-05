@@ -165,7 +165,11 @@ export default function AdminCorridasPage() {
                         </span>
                       </td>
                       <td className="whitespace-nowrap px-4 py-3">
-                        {c.categoria === 1 ? (
+                        {c.tipoVeiculo === 1 ? (
+                          <span className="inline-block rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                            🏍️ Moto
+                          </span>
+                        ) : c.categoria === 1 ? (
                           <span className="inline-block rounded-full bg-gray-900 px-2 py-0.5 text-xs font-medium text-white dark:bg-white dark:text-gray-900">
                             Executivo
                           </span>
