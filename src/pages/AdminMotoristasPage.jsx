@@ -497,7 +497,17 @@ function MotoristaCard({ motorista, onAtualizar }) {
             <FotoMotorista motoristaId={motorista.id} tipo="selfie" label="Selfie" disponivel={motorista.temFotoSelfie} onAtualizar={onAtualizar} />
             <FotoMotorista motoristaId={motorista.id} tipo="veiculo" label="Veículo" disponivel={motorista.temFotoVeiculo} onAtualizar={onAtualizar} />
             <FotoMotorista motoristaId={motorista.id} tipo="placa" label="Placa" disponivel={motorista.temFotoPlaca} onAtualizar={onAtualizar} />
+            {motorista.tipoVeiculo === 1 && (
+              <FotoMotorista motoristaId={motorista.id} tipo="cnh" label="CNH" disponivel={motorista.temFotoCnh} onAtualizar={onAtualizar} />
+            )}
           </div>
+
+          {motorista.tipoVeiculo === 1 && (
+            <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+              Moto — CNH categoria A com EAR: {motorista.cnhCategoriaAEar ? '✅ declarada' : '⚠️ pendente'} · Regras da moto:{' '}
+              {motorista.regrasMotoAceitas ? '✅ aceitas' : '⚠️ pendente'}
+            </p>
+          )}
 
           <div className="mt-5 border-t border-gray-100 pt-4 dark:border-gray-700">
             {acao === null && (
